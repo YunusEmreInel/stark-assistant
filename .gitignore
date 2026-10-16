@@ -1,0 +1,35 @@
+# Python / araçlar
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+build/
+dist/
+*.egg-info/
+
+# Derlenen başlatıcı (kurulum betiği üretir)
+launcher/Stark.exe
+launcher/stark.ico
+
+# Kişisel veri asla depoya girmesin (normalde %USERPROFILE%\.stark altında durur)
+.stark/
+*.db
+*.db-journal
+*.sqlite
+*.log
+*.wav
+*.mp3
+settings.json
+yerler.json
+models/
+yedekler/
+
+# Yerel çalışma notları
+STARK_PROMPT.md
+CLAUDE.md
+.claude/
+
+# Gizli bilgiler
+.env
+*.pem
+*.key

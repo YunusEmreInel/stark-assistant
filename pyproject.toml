@@ -1,0 +1,36 @@
+[project]
+name = "stark"
+version = "0.1.0"
+description = "Windows'ta yerel çalışan Türkçe kişisel sesli asistan"
+requires-python = ">=3.11,<3.12"
+dependencies = [
+    "PySide6>=6.7",
+    "sounddevice>=0.5",
+    "numpy>=1.26",
+    "sherpa-onnx>=1.12",
+    "faster-whisper>=1.1",
+    "httpx>=0.27",
+    "trafilatura>=2.0",
+    "ddgs>=9.0",
+    "winrt-runtime>=3.0",                 # Windows yazı tanıma (ekranı okuma)
+    "winrt-Windows.Media.Ocr>=3.0",
+    "winrt-Windows.Graphics.Imaging>=3.0",
+    "winrt-Windows.Storage.Streams>=3.0",
+    "winrt-Windows.Globalization>=3.0",
+    "winrt-Windows.Foundation>=3.0",
+    "winrt-Windows.Foundation.Collections>=3.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
