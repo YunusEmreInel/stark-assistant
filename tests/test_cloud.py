@@ -90,9 +90,9 @@ def ok(text):
 def test_rate_limited_provider_is_skipped_until_cooldown(monkeypatch):
     llm, seen = make(monkeypatch, [Resp(429, {}, {"retry-after": "30"}), ok("merhaba"), ok("yine")])
     assert llm.complete([{"role": "user", "content": "x"}]) == "merhaba"
-    assert seen == ["qwen/qwen3.8-27b", "openai/gpt-oss-120b"] and llm.last_label == "Groq · GPT-OSS 120B"
+    assert seen == ["openai/gpt-oss-120b", "qwen/qwen3.8-27b"] and llm.last_label == "Groq · Qwen3.8 27B"
     assert llm.complete([{"role": "user", "content": "x"}]) == "yine"
-    assert seen[-1] == "openai/gpt-oss-120b"  # limit dolan model 30 sn boyunca atlanır
+    assert seen[-1] == "qwen/qwen3.8-27b"  # limit dolan model 30 sn boyunca atlanır
 
 
 def test_falls_back_to_local_when_all_fail(monkeypatch):
@@ -119,7 +119,7 @@ def test_streaming_hides_think_block_and_falls_back(monkeypatch):
              lambda full: (done.append(full), finished.set()), lambda m: finished.set())
     finished.wait(5)
     assert done == ["Merhaba patron."] and "".join(pieces) == "Merhaba patron."
-    assert llm.last_label == "Groq · GPT-OSS 120B"
+    assert llm.last_label == "Groq · Qwen3.8 27B"
 
 
 def test_cloud_mode_keeps_gpu_free(monkeypatch):

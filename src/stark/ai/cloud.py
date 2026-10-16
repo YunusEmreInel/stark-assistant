@@ -36,8 +36,10 @@ class Provider:
 
 def default_providers(use_gemini: bool) -> list[Provider]:
     chain = [
+        # GPT-OSS cevaptan önce düşünüyor (ölçüm: "20 kafa, 56 ayak, kaç tavşan?" → doğru, ~1 sn); Qwen3.8
+        # düşünmeden hızlı ama aynı soruda yanıldı. Düşünme metni ayrı alanda gelir, seslendirilmez.
+        Provider("groq", "Groq · GPT-OSS 120B", GROQ, "openai/gpt-oss-120b", {"reasoning_effort": "medium"}),
         Provider("groq", "Groq · Qwen3.8 27B", GROQ, "qwen/qwen3.8-27b", {"reasoning_effort": "none"}),
-        Provider("groq", "Groq · GPT-OSS 120B", GROQ, "openai/gpt-oss-120b", {"reasoning_effort": "low"}),
     ]
     if use_gemini:
         chain.append(Provider("gemini", "Gemini Flash-Lite", GEMINI, "gemini-flash-lite-latest"))
@@ -152,7 +154,10 @@ class HybridLLM:
         for p in self._available():
             try:
                 r = httpx.post(p.url, headers=self._headers(p), timeout=timeout,
-                               json=self._body(p, messages, False, max(num_predict, 64), 0))
+                               # Düşünen modeller (GPT-OSS) düşünme metnini de bu sınırdan harcıyor: 64 token'da
+                               # karar satırına sıra gelmiyor, arama kararı boş dönüyordu
+                               json={**self._body(p, messages, False, num_predict + 1500, 0),
+                                     **({"reasoning_effort": "low"} if "gpt-oss" in p.model else {})})
                 if r.status_code != 200:
                     raise CloudError(f"HTTP {r.status_code}: {r.text[:160]}",
                                      _cooldown_for(r.status_code, r.headers, r.text))
