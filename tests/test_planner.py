@@ -1,3 +1,4 @@
+import pytest
 from stark.ai import search_planner
 from stark.tools import router
 
@@ -40,3 +41,18 @@ def test_asked_day():
 def test_event_queries_go_to_news_with_names_only():
     assert router.NEWS.search("İzmir Bornova ev tüp patlama")
     assert router.news_keywords("İzmir Bornova olay dün") == "İzmir Bornova"
+
+
+@pytest.mark.parametrize("text, agenda, query", [
+    ("Zafer Partisi'nde yeni bir haberler var mı? Bugün ve dün? Ne oldu mesela Zafer Partisi'nde?", False, "Zafer Partisi"),
+    ("Fenerbahçe'de neler oluyor?", False, "Fenerbahçe"),
+    ("Deprem haberleri", False, "Deprem"),
+    ("Gündemde neler var?", True, None),
+    ("Haberler neler?", True, None),
+    ("Son dakika haberleri", True, None),
+])
+def test_topic_news_is_not_general_agenda(text, agenda, query):
+    """Konu adı geçen haber sorusu genel manşetlere değil o konunun haberlerine gider."""
+    assert router.is_agenda(text) is agenda
+    if query:
+        assert router.news_keywords(text) == query

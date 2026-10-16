@@ -51,9 +51,30 @@ _NEWS_GENERIC = ("son", "maç", "sonuç", "skor", "kazan", "yend", "yenil", "oyn
 NEWS_LIST = re.compile(r"gündem|neler|son\s+dakika|haberler|headlines|what'?s\s+(new|happening)", re.I)
 
 
+# Konu bildirmeyen kelimeler: "Zafer Partisi'nde yeni haberler var mı, bugün ne oldu mesela?" → konu: Zafer Partisi
+_NOT_TOPIC = ("yeni", "mesela", "önemli", "neymiş", "oluyor", "olmuş", "gelişme", "türkiye", "dünya", "ülke",
+              "var", "yok", "acil")
+
+
+def topic_words(text: str) -> list[str]:
+    """Haber sorusundaki konu kelimeleri (genel kelimeler ve tekrarlar atılır)."""
+    out: list[str] = []
+    for w in keywords(text).split():
+        low = w.replace("İ", "i").lower()
+        if len(low) > 1 and not low.startswith(_NEWS_GENERIC + _NOT_TOPIC) and low not in (x.lower() for x in out):
+            out.append(w)
+    return out
+
+
+def is_agenda(text: str) -> bool:
+    """Genel gündem özeti mi ("Gündemde neler var?", "Son dakika haberleri")? Bir konu adı geçiyorsa
+    ("Zafer Partisi'nde neler oldu?") o konunun haberleri aranır, genel manşetler değil."""
+    return bool(NEWS_LIST.search(text)) and not topic_words(text)
+
+
 def news_keywords(text: str) -> str:
     if NEWS_LIST.search(text):
-        return keywords(text)
+        return " ".join(topic_words(text)) or keywords(text)
     words = [w for w in keywords(text).split() if not w.lower().startswith(_NEWS_GENERIC)]
     return " ".join(words) or keywords(text)
 

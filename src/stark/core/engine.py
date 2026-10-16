@@ -359,7 +359,7 @@ class Engine:
                      if lang != "en" else "Which city should I check, boss? You can set a default city in Settings.")
             self._finish_tool_turn(session, text, reply)
             return True
-        if r is not None and (r.kind in ("weather", "currency") or (r.kind == "news" and NEWS_LIST.search(text))):
+        if r is not None and (r.kind in ("weather", "currency") or (r.kind == "news" and router.is_agenda(text))):
             # "Gündemde neler var?": karar adımı bazen "arama gerekmez" deyip modeli uydurmaya bırakıyordu
             self._start_tool(session, text, lang, r)  # kesin kalıplar: karar adımına gerek yok
             return True
@@ -446,7 +446,7 @@ class Engine:
                                                   f"{web_provider}, {provider}", "search")
 
                 # Haberlerde net cevap yoksa bir kez web'de aranır (gündem özetinde gerekmez)
-                retry = web_retry if kind == "news" and not NEWS_LIST.search(text) else None
+                retry = web_retry if kind == "news" and not router.is_agenda(text) else None
                 self._answer_from_sources(session, text, lang, sources, provider, kind, retry)
                 return
         except web.SearchError as e:
@@ -465,7 +465,7 @@ class Engine:
 
     def _gather(self, text: str, lang: str, r) -> tuple[list, str, str]:
         """Kaynakları toplar: (kaynaklar, sağlayıcı adı, tür). Sırayla: gündem akışları / haber RSS / web."""
-        if r.kind == "news" and NEWS_LIST.search(text) and lang != "en":
+        if r.kind == "news" and router.is_agenda(text) and lang != "en":
             try:
                 return news.agenda(), "AA, TRT Haber, NTV, Hürriyet", "news"
             except web.SearchError:
@@ -588,7 +588,14 @@ class Engine:
 
     def _answer_from_sources(self, session, text, lang, sources, provider, kind="search", retry=None) -> None:
         today = datetime.now().strftime("%Y-%m-%d")
-        if kind == "news" and NEWS_LIST.search(text):
+        if kind == "news" and NEWS_LIST.search(text) and not router.is_agenda(text):
+            # "Zafer Partisi'nde neler oldu?": o konunun son haberleri, tarihleriyle
+            topic = " ".join(router.topic_words(text))
+            task = (f"Today is {today}. These are recent news items about '{topic}', newest first, with publication "
+                    "dates. Summarise what happened in 2-4 short sentences, newest first, saying when (e.g. 'bugün', "
+                    "'dün' or the date). Use only items that are really about this topic; if none are, say you found "
+                    "no recent news about it.")
+        elif kind == "news" and NEWS_LIST.search(text):
             task = ("These are current news items, newest first. Tell the user 3-4 DIFFERENT news topics, one short "
                     "sentence each (several items about the same event count as one topic). Start directly with the "
                     "first news, e.g. 'Gündemde öne çıkanlar: ...'. Skip ads, shopping and TV-listing items.")
