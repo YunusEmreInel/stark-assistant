@@ -1,6 +1,7 @@
-"""README görsellerini üretir: docs/images/ana-panel.png ve docs/images/mini-panel.png.
+"""README görsellerini üretir: docs/images/main-panel.png ve docs/images/corner-panel.png.
 
-Sohbet içeriği gösterilmez (konuşma alanı boş), motor başlatılmaz.
+Sohbet içeriği gösterilmez (konuşma alanı boş), motor başlatılmaz. README İngilizce olduğundan pencere
+yazıları yalnızca görsel için İngilizceye çevrilir (uygulamanın kendi arayüzü Türkçedir).
 Kullanım: .venv\\Scripts\\python.exe scripts\\make_screenshots.py
 """
 import os
@@ -54,6 +55,19 @@ def desktop_corner(panel: QPixmap) -> QPixmap:
     return img
 
 
+def english_labels(win) -> None:
+    """Görseldeki Türkçe pencere yazılarının İngilizcesi (yalnızca README görseli için)."""
+    from PySide6.QtWidgets import QLabel
+    win.status.setText("LISTENING")
+    win.hint.setText("Go ahead · goes back to sleep after 10 s of silence")
+    win.chip.setText("<span style='color:#E8A23A'>●</span>&nbsp; Microphone on")
+    win.transcript.setHtml("<p style='color:#5A5A62'>No conversation yet.</p>")
+    win.footer_left.setText(f"{win.engine.s.llm_model}  ·  whisper {win.engine.s.whisper_model}  ·  local")
+    for label in win.findChildren(QLabel):
+        if label.text() == "KONUŞMA":
+            label.setText("CONVERSATION")
+
+
 def main() -> None:
     app = QApplication(sys.argv)
     app.setStyleSheet(QSS)
@@ -61,16 +75,18 @@ def main() -> None:
     engine = DemoEngine()
     win = MainWindow(engine, app_icon())
     win.set_state(State.LISTENING)
+    english_labels(win)
     win.show()
     mini = MiniPanel(engine)
     mini.set_state(State.LISTENING)
+    mini.label.setText("LISTENING")
     mini.move(-2000, -2000)  # ekranda görünmesin; yalnızca çizilsin
     mini.show()
 
     def capture():
-        win.grab().save(str(OUT / "ana-panel.png"))
-        desktop_corner(mini.grab()).save(str(OUT / "mini-panel.png"))
-        print("kaydedildi:", OUT / "ana-panel.png", OUT / "mini-panel.png", flush=True)
+        win.grab().save(str(OUT / "main-panel.png"))
+        desktop_corner(mini.grab()).save(str(OUT / "corner-panel.png"))
+        print("kaydedildi:", OUT / "main-panel.png", OUT / "corner-panel.png", flush=True)
         os._exit(0)  # pencere X'i tepsiye gizlediğinden normal çıkış beklemede kalıyordu
 
     QTimer.singleShot(1500, capture)  # küre animasyonu birkaç kare dönsün

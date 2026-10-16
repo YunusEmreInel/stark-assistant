@@ -10,14 +10,16 @@ rates, football fixtures, earthquakes).
 
 <table>
   <tr>
-    <td align="center" width="55%"><img src="docs/images/ana-panel.png" alt="Stark main panel" width="420"></td>
-    <td align="center" width="45%"><img src="docs/images/mini-panel.png" alt="Mini panel shown in the bottom-right corner when the main window is closed" width="380"></td>
+    <td align="center" width="55%"><img src="docs/images/main-panel.png" alt="Stark main panel" width="420"></td>
+    <td align="center" width="45%"><img src="docs/images/corner-panel.png" alt="Mini panel shown in the bottom-right corner when the main window is closed" width="380"></td>
   </tr>
   <tr>
     <td align="center"><b>Main panel</b> — the golden orb shows Stark's state (listening, thinking, speaking) and reacts to its voice; the conversation is also shown as text.</td>
     <td align="center"><b>Mini panel</b> — when the main window is closed, saying "Stark" brings up this small panel in the bottom-right corner without stealing focus from the app you are using.</td>
   </tr>
 </table>
+
+<sub>Window labels in these screenshots are shown in English for this README; the app's own interface is in Turkish.</sub>
 
 > This is a personal project and is not claimed to be error-free. Because it uses a small local language model,
 > some answers can be wrong — the code has several safeguards against this (see
@@ -246,6 +248,8 @@ The local 4B language model is small, so its own knowledge is not trusted. Inste
 ---
 
 ## Performance and memory
+
+<p align="center"><img src="docs/images/performance.png" alt="Measured resource usage, sleep cycle and response times" width="640"></p>
 
 - **While sleeping:** Stark uses ~15 MB of RAM; the language model is unloaded 1 minute after it goes to sleep
   (`llama-server` disappears from Task Manager).
