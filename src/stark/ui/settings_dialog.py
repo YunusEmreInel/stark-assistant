@@ -4,8 +4,9 @@ import time
 import winreg
 from dataclasses import replace
 
-from PySide6.QtCore import Qt, QTimer
-from PySide6.QtWidgets import (QCheckBox, QComboBox, QDialog, QDialogButtonBox, QDoubleSpinBox, QFormLayout, QFrame,
+from PySide6.QtCore import QEvent, QObject, Qt, QTimer
+from PySide6.QtWidgets import (QAbstractSpinBox, QApplication, QCheckBox, QComboBox, QDialog, QDialogButtonBox,
+                               QDoubleSpinBox, QFormLayout, QFrame,
                                QGroupBox, QHBoxLayout, QLabel, QLineEdit, QMessageBox, QProgressBar,
                                QPushButton, QScrollArea, QSpinBox, QVBoxLayout, QWidget)
 
@@ -45,6 +46,20 @@ def set_autostart(on: bool) -> None:
                 winreg.DeleteValue(k, "Stark")
             except OSError:
                 pass
+
+
+class _WheelGuard(QObject):
+    """Odakta olmayan açılır liste/sayı kutusuna gelen fare tekerleğini kaydırma alanına yönlendirir."""
+
+    def __init__(self, scroll: QScrollArea):
+        super().__init__(scroll)
+        self.scroll = scroll
+
+    def eventFilter(self, obj, event) -> bool:
+        if event.type() == QEvent.Type.Wheel and not obj.hasFocus():
+            QApplication.sendEvent(self.scroll.verticalScrollBar(), event)
+            return True  # kutunun değeri değişmez
+        return False
 
 
 class SettingsDialog(QDialog):
@@ -201,6 +216,12 @@ class SettingsDialog(QDialog):
         scroll = QScrollArea(widgetResizable=True, frameShape=QFrame.Shape.NoFrame)
         scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         scroll.setWidget(content)
+        # Fareyle aşağı inerken tekerlek açılır listelerin/sayı kutularının değerini değiştiriyordu (ses ve konuşma
+        # hızı kendiliğinden değişmişti). Tıklanıp seçilmemiş kutular tekerleği sayfaya bırakır.
+        self._wheel_guard = _WheelGuard(scroll)
+        for w in content.findChildren(QComboBox) + content.findChildren(QAbstractSpinBox):
+            w.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+            w.installEventFilter(self._wheel_guard)
         lay = QVBoxLayout(self)
         lay.addWidget(scroll, 1)
         lay.addWidget(buttons)
