@@ -156,10 +156,11 @@ def _press(vk: int, times: int = 1) -> None:
 
 
 def first_youtube_video(query: str) -> str | None:
-    """YouTube arama sayfasındaki ilk videonun adresi (resmi API gerekmez)."""
+    """YouTube arama sayfasındaki ilk videonun adresi (resmi API gerekmez). Çerez onayı kullanıcı adına
+    verilmez; onay sayfası çıkarsa video bulunamaz ve arama sonuçları sayfası açılır."""
     r = httpx.get("https://www.youtube.com/results", params={"search_query": query}, timeout=8,
                   headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/130 Safari/537.36",
-                           "Accept-Language": "tr-TR,tr;q=0.9"}, cookies={"CONSENT": "YES+1", "SOCS": "CAI"})
+                           "Accept-Language": "tr-TR,tr;q=0.9"})
     m = re.search(r'"videoRenderer":\{"videoId":"([\w-]{11})"', r.text) or re.search(r'"videoId":"([\w-]{11})"', r.text)
     return f"https://www.youtube.com/watch?v={m.group(1)}" if m else None
 

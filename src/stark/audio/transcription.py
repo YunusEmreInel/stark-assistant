@@ -10,7 +10,7 @@ from typing import Callable
 
 import numpy as np
 
-from ..config import Settings
+from ..config import WHISPER_REVISIONS, Settings
 from ..tools import places
 
 WAKE_RE = re.compile(r"^\W*(?:hey\s+)?(i?s[dt]?[aâe]r[kcgq]|stark|start|şark|sark)\b[\s,.!?]*", re.I)
@@ -69,17 +69,19 @@ class Transcriber:
             _add_cuda_dll_paths()
         try:
             self.main = WhisperModel(self.s.whisper_model, device=device, compute_type=self.s.whisper_compute,
-                                     cpu_threads=4)
+                                     cpu_threads=4, revision=WHISPER_REVISIONS.get(self.s.whisper_model))
             self._run_model(self.main, np.zeros(SAMPLE_RATE, dtype=np.float32), "tr")
         except Exception:  # noqa: BLE001 — CUDA yoksa CPU'ya düş
             if device == "cpu":
                 raise
             device = "cpu"
-            self.main = WhisperModel(self.s.whisper_model, device="cpu", compute_type="int8", cpu_threads=4)
+            self.main = WhisperModel(self.s.whisper_model, device="cpu", compute_type="int8", cpu_threads=4,
+                                     revision=WHISPER_REVISIONS.get(self.s.whisper_model))
         self.main_on_gpu = device == "cuda"
         # Uyandırma kontrolü her zaman işlemcide: uykuda asıl model ekran kartından çıkarıldığında da
         # "Stark" duyulabilsin (2 sn ses ~0,4 sn, yalnızca konuşma algılanınca çalışır)
-        self.wake = WhisperModel("tiny", device="cpu", compute_type="int8", cpu_threads=2)
+        self.wake = WhisperModel("tiny", device="cpu", compute_type="int8", cpu_threads=2,
+                                 revision=WHISPER_REVISIONS["tiny"])
         threading.Thread(target=self._run, name="asr", daemon=True).start()
 
     # ---- uykuda ekran kartını boşaltma ----

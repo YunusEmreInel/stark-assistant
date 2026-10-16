@@ -26,7 +26,7 @@ def test_plan_dates_from_relative_stamps_and_explicit_dates():
     assert briefing.plan_date("Yarın veri yapıları sınavım var (söylendiği gün: 15.10.2026)") == date(2026, 10, 16)
     assert briefing.plan_date("Bugün dişçim var (söylendiği gün: 16.10.2026)") == date(2026, 10, 16)
     assert briefing.plan_date("Yarından sonra toplantı (söylendiği gün: 15.10.2026)") == date(2026, 10, 17)
-    assert briefing.plan_date(f"17 Ekim'de doğum günü partisi") == date(date.today().year, 10, 17)
+    assert briefing.plan_date("17 Ekim'de doğum günü partisi") == date(date.today().year, 10, 17)
     assert briefing.plan_date("En sevdiğim renk mavi") is None
 
 

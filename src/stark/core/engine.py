@@ -429,19 +429,20 @@ class Engine:
                 sources, provider, kind = self._gather(text, lang, r)
                 if self.controller.session != session:
                     return  # bu arada iptal edildi
-                retry = None
-                if kind == "news" and not NEWS_LIST.search(text):
-                    def retry() -> None:
-                        try:
-                            now = datetime.now()
-                            web_sources, web_provider = self._web_round(
-                                text, f"{r.query} {MONTHS_TR[now.month - 1]} {now.year}", lang)
-                        except Exception:  # noqa: BLE001 — web de olmazsa haber kaynaklarıyla dürüst cevap
-                            self._answer_from_sources(session, text, lang, sources, provider, kind)
-                            return
-                        if self.controller.session == session:
-                            self._answer_from_sources(session, text, lang, web_sources + sources[:3],
-                                                      f"{web_provider}, {provider}", "search")
+                def web_retry() -> None:
+                    try:
+                        now = datetime.now()
+                        web_sources, web_provider = self._web_round(
+                            text, f"{r.query} {MONTHS_TR[now.month - 1]} {now.year}", lang)
+                    except Exception:  # noqa: BLE001 — web de olmazsa haber kaynaklarıyla dürüst cevap
+                        self._answer_from_sources(session, text, lang, sources, provider, kind)
+                        return
+                    if self.controller.session == session:
+                        self._answer_from_sources(session, text, lang, web_sources + sources[:3],
+                                                  f"{web_provider}, {provider}", "search")
+
+                # Haberlerde net cevap yoksa bir kez web'de aranır (gündem özetinde gerekmez)
+                retry = web_retry if kind == "news" and not NEWS_LIST.search(text) else None
                 self._answer_from_sources(session, text, lang, sources, provider, kind, retry)
                 return
         except web.SearchError as e:

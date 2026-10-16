@@ -124,7 +124,7 @@ The script does the following (no administrator rights needed, your system Pytho
 | Language model | `ollama pull qwen3:4b-instruct` | ~2.5 GB |
 | Voice models | Speech detection, Turkish/English voices (Piper) | ~330 MB |
 | Speech recognition | Whisper medium and tiny | ~1.6 GB |
-| Dictionary | Builds the English–Turkish dictionary from Wiktionary (once) | ~90 MB, 3–20 min |
+| Dictionary | Builds the English–Turkish dictionary from Wiktionary (once; data is streamed, not saved) | downloads ~570 MB, keeps ~90 MB; 3–20 min |
 | Launcher | Compiles `launcher\Stark.exe` and adds a **Stark** shortcut to the desktop and Start menu | |
 | Tests | Runs the automated tests | |
 
@@ -306,6 +306,9 @@ powershell -File scripts\build_launcher.ps1      # rebuild Stark.exe and the sho
 .\.venv\Scripts\python.exe scripts\make_screenshots.py   # regenerate the README images
 ```
 
+- Measurement and experiment scripts used during development: [scripts/dev](scripts/dev/README.md)
+- Dependencies are pinned to the tested versions in `requirements.lock` (and `requirements-cuda.lock` for NVIDIA
+  cards); the setup script installs exactly these.
 - Architecture and the anti-hallucination layers: [docs/architecture.md](docs/architecture.md)
 - When adding a new voice command, update `src/stark/ui/help_text.py` (the ⓘ guide) and this README;
   `tests/test_help.py` fails for command types missing from the guide.

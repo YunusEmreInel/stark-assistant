@@ -1,0 +1,4 @@
+# NVIDIA ekran kartı varsa konuşma tanıma için CUDA kütüphaneleri (kurulum betiği yalnızca NVIDIA kart varsa kurar).
+nvidia-cublas-cu12==12.9.2.10
+nvidia-cuda-nvrtc-cu12==12.9.86
+nvidia-cudnn-cu12==9.27.0.42

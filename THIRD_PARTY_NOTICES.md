@@ -31,11 +31,16 @@ Licenses were read from the installed packages' metadata and from each model's o
 | Piper `tr_TR-fettah-medium` | Text-to-speech (option) | CC0 |
 | Piper `tr_TR-dfki-medium` | Text-to-speech (option) | CC BY-NC-SA 4.0 — non-commercial use |
 | Piper `en_US-lessac-medium` | English text-to-speech | Blizzard 2013 / Lessac license — non-commercial use |
-| sherpa-onnx KWS zipformer gigaspeech | Tried, not used | Apache-2.0 |
 | Wiktionary (Turkish and English, via kaikki.org Wiktextract) → `models\sozluk.db` | English–Turkish dictionary | CC BY-SA 4.0 |
 
 Ollama (MIT) is installed as a separate application. The models and data are downloaded during setup; none of
-them are included in this repository.
+them are included in this repository. Integrity checks:
+
+- Speech-detection and voice models: the SHA-256 of every file is verified (`scripts/download_models.py`);
+  a file that doesn't match is deleted, not installed.
+- Whisper models: downloaded from a fixed Hugging Face commit (`WHISPER_REVISIONS` in `src/stark/config.py`).
+- Language model: Ollama verifies the SHA-256 digest of every model layer it downloads.
+- Dictionary: Wiktionary data is plain text parsed into a SQLite database; it is never executed.
 
 ## Online services (only when internet access is on)
 

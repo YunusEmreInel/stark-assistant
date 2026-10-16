@@ -1,0 +1,9 @@
+﻿# Stark'ı konsol penceresiyle başlatır (hata ayıklama için; hatalar ekrana yazılır).
+# Kullanım: powershell -ExecutionPolicy Bypass -File scripts\dev\run_console.ps1
+$root = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
+Set-Location $root
+$env:PYTHONIOENCODING = "utf-8"
+$env:HF_HUB_DISABLE_PROGRESS_BARS = "1"
+$env:HF_HUB_DISABLE_TELEMETRY = "1"
+& "$root\.venv\Scripts\python.exe" -m stark
+

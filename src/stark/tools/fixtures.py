@@ -12,7 +12,7 @@ from datetime import date, datetime, timedelta, timezone
 import httpx
 
 BASE = "https://site.api.espn.com/apis/site/v2/sports/soccer"
-TR_TZ = timezone(timedelta(hours=3))  # Türkiye: yaz saati yok, sabit UTC+3
+TR_TZ = timezone(timedelta(hours=3))  # Türkiye (UTC+3); testlerde kullanılır, uygulama bilgisayarın saat dilimini kullanır
 # Sezon başında güncellenen liste ESPN'den okunur; erişilemezse bu yedek kullanılır
 FALLBACK_TEAMS = {"Alanyaspor": "9078", "Amed SFK": "132335", "Besiktas": "1895", "Caykur Rizespor": "7656",
                   "Erzurum BB": "19267", "Eyupspor": "20729", "Fenerbahce": "436", "Galatasaray": "432",
@@ -140,7 +140,7 @@ def parse(text: str, foreign: bool = False, client=None) -> FixtureQuery | None:
 # ---- veri ----
 @dataclass
 class Match:
-    when: datetime          # Türkiye saati
+    when: datetime          # bilgisayarın saat diliminde
     home: str
     away: str
     league: str
@@ -154,7 +154,7 @@ def _team_id(team: str) -> str:
     return FALLBACK_TEAMS.get(team) or _foreign.get(team, "")
 
 
-def _events(team_id: str, upcoming: bool, client=None) -> list[Match]:
+def _events(team_id: str, upcoming: bool, client=None, tz=None) -> list[Match]:
     url = f"{BASE}/all/teams/{team_id}/schedule" + ("?fixture=true" if upcoming else "")
     data = (client or httpx).get(url, timeout=10).json()
     out = []
@@ -166,7 +166,7 @@ def _events(team_id: str, upcoming: bool, client=None) -> list[Match]:
         status = c.get("status", {}).get("type", {})
         score = lambda x: int(x["score"]["value"]) if isinstance(x.get("score"), dict) else None  # noqa: E731
         league = e.get("league", {}).get("name", "") if isinstance(e.get("league"), dict) else ""
-        out.append(Match(datetime.fromisoformat(e["date"].replace("Z", "+00:00")).astimezone(TR_TZ),
+        out.append(Match(datetime.fromisoformat(e["date"].replace("Z", "+00:00")).astimezone(tz),
                          teams["home"]["team"]["displayName"], teams["away"]["team"]["displayName"],
                          LEAGUES.get(league, league), status.get("state", "pre"),
                          score(teams["home"]), score(teams["away"]), c.get("status", {}).get("displayClock", "")))
@@ -206,13 +206,14 @@ def _score_line(m: Match, team: str) -> str:
 
 
 def answer(q: FixtureQuery, now: datetime | None = None, client=None) -> str:
-    now = now or datetime.now(TR_TZ)
+    now = now or datetime.now().astimezone()  # maç saati bilgisayarın saat diliminde söylenir
+    tz = now.tzinfo
     today = now.date()
     team_id = _team_id(q.team)
     name = tr(q.team)
     if q.mode == "next":
-        matches = [m for m in _events(team_id, True, client) if m.state != "post"]
-        live = [m for m in _events(team_id, False, client) if m.state == "in"]
+        matches = [m for m in _events(team_id, True, client, tz) if m.state != "post"]
+        live = [m for m in _events(team_id, False, client, tz) if m.state == "in"]
         if live:
             m = live[0]
             return (f"{name} şu an {tr(m.away if m.home == q.team else m.home)} ile oynuyor patron: "
@@ -230,7 +231,7 @@ def answer(q: FixtureQuery, now: datetime | None = None, client=None) -> str:
             return f"{day_word} {gen(name)} maçı yok patron. Sıradaki maçı: {line}"
         return f"{gen(name)} maçı: {line}"
     # sonuç
-    played = [m for m in _events(team_id, False, client) if m.state in ("post", "in")]
+    played = [m for m in _events(team_id, False, client, tz) if m.state in ("post", "in")]
     if q.day is not None:
         played = [m for m in played if (m.when.date() - today).days == q.day] or []
         if not played:

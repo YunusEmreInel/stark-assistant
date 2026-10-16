@@ -142,6 +142,16 @@ async def _ocr_async(png: bytes, language: str) -> str:
     return "\n".join(line.text for line in result.lines)
 
 
+def turkish_ocr_available() -> bool:
+    """Windows'ta Türkçe yazı tanıma kurulu mu (Türkçe dil paketi)?"""
+    try:
+        from winrt.windows.globalization import Language
+        from winrt.windows.media.ocr import OcrEngine
+        return bool(OcrEngine.is_language_supported(Language("tr")))
+    except Exception:  # noqa: BLE001 — winrt yok ya da desteklenmeyen sistem
+        return False
+
+
 def ocr(png: bytes, language: str = "tr") -> str:
     return asyncio.run(_ocr_async(png, language))
 

@@ -2,11 +2,13 @@
 
 İnternetten gelen metin talimat değil VERİDİR; modele bu açıkça söylenir. Her istekte zaman ve boyut sınırı var.
 """
+import ipaddress
 import re
+import socket
 import time
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
-from urllib.parse import urlparse
+from urllib.parse import urljoin, urlparse
 
 import httpx
 
@@ -14,6 +16,7 @@ MAX_PAGE_BYTES = 1_500_000
 PAGE_CHARS = 30_000      # sayfanın tamamı okunur; modele yalnızca soruyla ilgili paragraflar gider
 CHUNK_CHARS = 450
 FETCH_TIMEOUT = 5
+MAX_REDIRECTS = 5
 HEADERS = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Stark/0.1 (personal assistant)",
            "Accept-Language": "tr-TR,tr;q=0.9,en;q=0.7"}
 WIKI_HEADERS = {"User-Agent": "StarkAssistant/1.0 (personal voice assistant; https://github.com/) httpx",
@@ -86,19 +89,43 @@ def search(query: str, language: str, searxng_url: str = "", limit: int = 5) -> 
     raise SearchError("; ".join(errors) or "sonuç yok")
 
 
+def is_public_url(url: str) -> bool:
+    """Yalnızca internetteki adresler okunur. Bir arama sonucu ya da yönlendirme ev ağına (modem 192.168.x.x),
+    bilgisayarın kendisine (127.0.0.1, Ollama) ya da özel adreslere giderse sayfa açılmaz."""
+    parsed = urlparse(url)
+    if parsed.scheme not in ("http", "https") or not parsed.hostname:
+        return False
+    try:
+        infos = socket.getaddrinfo(parsed.hostname, parsed.port or (443 if parsed.scheme == "https" else 80),
+                                   proto=socket.IPPROTO_TCP)
+    except (socket.gaierror, UnicodeError, ValueError):
+        return False
+    addresses = {ipaddress.ip_address(info[4][0].split("%")[0]) for info in infos}
+    return bool(addresses) and all(a.is_global and not a.is_multicast for a in addresses)
+
+
 def _page_text(url: str) -> str:
     import trafilatura
     try:
-        # Vikipedi tarayıcı taklidi yapan istemcileri 403 ile reddediyor; kendini tanıtan istemciye izin veriyor
-        headers = WIKI_HEADERS if "wikipedia.org" in url else HEADERS
-        with httpx.stream("GET", url, timeout=FETCH_TIMEOUT, headers=headers, follow_redirects=True) as r:
-            if r.status_code != 200 or "html" not in r.headers.get("content-type", ""):
+        for _ in range(MAX_REDIRECTS + 1):  # yönlendirmeler tek tek izlenir: her adım internette mi?
+            if not is_public_url(url):
                 return ""
-            body = b""
-            for chunk in r.iter_bytes():
-                body += chunk
-                if len(body) > MAX_PAGE_BYTES:
-                    break
+            # Vikipedi tarayıcı taklidi yapan istemcileri 403 ile reddediyor; kendini tanıtan istemciye izin veriyor
+            headers = WIKI_HEADERS if "wikipedia.org" in url else HEADERS
+            with httpx.stream("GET", url, timeout=FETCH_TIMEOUT, headers=headers, follow_redirects=False) as r:
+                if r.is_redirect and r.headers.get("location"):
+                    url = urljoin(url, r.headers["location"])
+                    continue
+                if r.status_code != 200 or "html" not in r.headers.get("content-type", ""):
+                    return ""
+                body = b""
+                for chunk in r.iter_bytes():
+                    body += chunk
+                    if len(body) > MAX_PAGE_BYTES:
+                        break
+                break
+        else:
+            return ""  # çok fazla yönlendirme
     except httpx.HTTPError:
         return ""
     text = trafilatura.extract(body.decode(r.encoding or "utf-8", errors="replace"),

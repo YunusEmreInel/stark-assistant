@@ -1,5 +1,4 @@
 ﻿"""İki aşamalı uyandırma denemesi: Silero VAD → kısa bölüm → Whisper (tiny/base) → 'stark' eşleşmesi."""
-import os
 import re
 import tempfile
 import time

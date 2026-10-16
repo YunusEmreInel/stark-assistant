@@ -5,7 +5,7 @@ from pathlib import Path
 
 import numpy as np
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 from stark.audio.transcription import _add_cuda_dll_paths  # noqa: E402
 
 _add_cuda_dll_paths()

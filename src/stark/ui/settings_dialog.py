@@ -10,7 +10,7 @@ from PySide6.QtWidgets import (QCheckBox, QComboBox, QDialog, QDialogButtonBox, 
                                QPushButton, QSpinBox, QVBoxLayout)
 
 from ..audio.capture import list_devices
-from ..config import BACKUP_DIR, MODELS_DIR, Settings
+from ..config import BACKUP_DIR, MODELS_DIR, WHISPER_REVISIONS, Settings
 from ..memory import backup
 from ..core.states import State
 from .window_style import dark_title_bar
@@ -101,7 +101,8 @@ class SettingsDialog(QDialog):
         self.llm.addItems(engine.llm.list_models() or [settings.llm_model])
         self.llm.setCurrentText(settings.llm_model)
         self.asr = QComboBox()
-        self.asr.addItems(["small", "medium", "large-v3-turbo"])
+        # large-v3-turbo sunulmuyor: 4 GB ekran kartında dil modeliyle birlikte sığmıyor
+        self.asr.addItems([m for m in WHISPER_REVISIONS if m != "tiny"])  # small, medium
         self.asr.setCurrentText(settings.whisper_model)
         self.unload = QSpinBox(minimum=0, maximum=120, value=settings.llm_idle_unload_min, suffix=" dk")
         self.unload.setSpecialValueText("Hep bellekte")

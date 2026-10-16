@@ -1,5 +1,4 @@
 ﻿"""Piper TTS (Türkçe/İngilizce) hızını ölçer, sesi çalar; üretilen sesle Whisper ASR hızını ölçer."""
-import os
 import time
 from pathlib import Path
 

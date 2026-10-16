@@ -19,11 +19,13 @@ Write-Host "Python: $py"
 Step "Sanal ortam (.venv) ve kütüphaneler"
 if (-not (Test-Path .venv)) { & py -3.11 -m venv .venv }
 & .\.venv\Scripts\python.exe -m pip install --upgrade pip -q
-& .\.venv\Scripts\python.exe -m pip install -e ".[dev]" -q
+# Test edilmiş tam sürümler (requirements.lock), sonra Stark'ın kendisi (bağımlılıkları yeniden çözmeden)
+& .\.venv\Scripts\python.exe -m pip install -r requirements.lock -q
+& .\.venv\Scripts\python.exe -m pip install -e . --no-deps -q
 $hasNvidia = [bool](Get-Command nvidia-smi -ErrorAction SilentlyContinue)
 if ($hasNvidia) {
     Write-Host "NVIDIA ekran kartı bulundu: konuşma tanıma için CUDA kütüphaneleri kuruluyor (~1 GB)"
-    & .\.venv\Scripts\python.exe -m pip install -q nvidia-cublas-cu12 "nvidia-cudnn-cu12==9.*"
+    & .\.venv\Scripts\python.exe -m pip install -q -r requirements-cuda.lock
 } else {
     Write-Host "NVIDIA ekran kartı yok: konuşma tanıma işlemcide çalışacak (Ayarlar'dan 'small' modeli önerilir)."
 }
@@ -40,7 +42,7 @@ Step "Ses modelleri (uyandırma, konuşma algılama, Türkçe/İngilizce ses)"
 & .\.venv\Scripts\python.exe scripts\download_models.py
 
 Step "Konuşma tanıma modelleri (Whisper medium + tiny)"
-& .\.venv\Scripts\python.exe -c "from faster_whisper.utils import download_model as d; d('medium'); d('tiny'); print('tamam')"
+& .\.venv\Scripts\python.exe -c "from faster_whisper.utils import download_model as d; from stark.config import WHISPER_REVISIONS as R; d('medium', revision=R['medium']); d('tiny', revision=R['tiny']); print('tamam')"
 
 Step "İngilizce-Türkçe sözlük (Vikisözlük, ~10-20 dk, bir kez)"
 if (-not (Test-Path "$env:USERPROFILE\.stark\models\sozluk.db")) { & .\.venv\Scripts\python.exe scripts\build_dictionary.py }

@@ -15,6 +15,12 @@ LOG_FILE = APP_DIR / "stark_hata.log"
 BACKUP_DIR = APP_DIR / "yedekler"
 SETTINGS_FILE = APP_DIR / "settings.json"
 DB_FILE = APP_DIR / "stark.db"   # sohbet geçmişi + açıkça kaydedilen hafıza
+# Whisper modelleri Hugging Face'ten sabit bir sürümden (commit) indirilir: depo sonradan değişse de aynı dosyalar gelir
+WHISPER_REVISIONS = {
+    "tiny": "d90ca5fe260221311c53c58e660288d3deb8d356",
+    "small": "536b0662742c02347bc0e980a01041f333bce120",
+    "medium": "08e178d48790749d25932bbc082711ddcfdfbc4f",
+}
 
 # Talimat İngilizce: küçük modeller İngilizce talimata daha iyi uyuyor ve "Sen Stark'sın" gibi cümleleri
 # cevaba kopyalamıyor ("Ben Sen Stark" hatası). Cevap dili ayrıca her turda belirtilir.
@@ -59,7 +65,6 @@ class Settings:
     llm_model: str = "qwen3:4b-instruct"   # uydurma testinde gemma3:4b'den belirgin şekilde dürüst
     llm_num_ctx: int = 4096
     llm_num_gpu: int = 99                # tüm katmanlar GPU'da (ölçüm: 13 → 45 tok/sn)
-    llm_keep_alive: str = "30m"          # eski ayar, kullanılmıyor (llm_idle_unload_min)
     llm_idle_unload_min: int = 1         # uykuya geçtikten bu kadar dk sonra dil modeli bellekten çıkar (~1,3 GB);
                                          # "Stark" deyince yeniden yüklenir (~3 sn, konuşurken). 0: hep bellekte
     llm_timeout_s: float = 60.0

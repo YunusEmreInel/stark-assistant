@@ -36,7 +36,9 @@ def test_ocr_reads_rendered_turkish_text():
     from PySide6.QtCore import QBuffer, QIODevice, Qt
     from PySide6.QtGui import QColor, QFont, QImage, QPainter
     from PySide6.QtWidgets import QApplication
-    QApplication.instance() or QApplication([])
+    QApplication.instance() or QApplication([])  # önce Qt: Windows yazı tanıması Qt'den önce başlarsa çöküyor
+    if not screen.turkish_ocr_available():
+        pytest.skip("Windows'ta Türkçe yazı tanıma (Türkçe dil paketi) kurulu değil")
     img = QImage(900, 160, QImage.Format.Format_RGB32)
     img.fill(QColor("white"))
     p = QPainter(img)

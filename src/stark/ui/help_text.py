@@ -21,8 +21,7 @@ SECTIONS = [
         ("Dolar kaç lira? / Euro kaç dolar?", "Avrupa Merkez Bankası referans kuru."),
         ("Gündemde neler var?", "AA, TRT Haber, NTV, Hürriyet manşetlerinden özet."),
         ("Fenerbahçe'nin son maçı kaç kaç bitti?", "Süper Lig takımları için fikstürden: skor, tarih, turnuva."),
-        ("Fenerbahçe'nin yarınki maçı saat kaçta? / GS'nin sonraki maçı ne zaman?", "Rakip, gün, saat (Türkiye "
-                                                                                     "saati) ve turnuva."),
+        ("Fenerbahçe'nin yarınki maçı saat kaçta? / GS'nin sonraki maçı ne zaman?", "Rakip, gün, saat ve turnuva."),
         ("Maçkolik sitesine bak / Vikipedi'den bak", "Önceki soruyu o sitede arar."),
         ("Dün Bornova'da ne oldu?", "Yerel haberler, o güne ait olanlar."),
         ("Son deprem nerede oldu? / İzmir'de deprem mi oldu?", "Kandilli Rasathanesi listesinden: yer, saat, büyüklük."),
