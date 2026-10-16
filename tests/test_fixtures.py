@@ -108,3 +108,29 @@ def test_foreign_team_found_from_league_lists(monkeypatch):
     assert q == FixtureQuery("Manchester City", "next")
     assert parse("Barselona'nın son maçı kaç kaç bitti?", foreign=True).team == "Barcelona"
     assert fixtures.gen("Manchester City") == "Manchester City'nin"
+
+
+@pytest.mark.parametrize("text, count, mode, site", [
+    ("Sitenin adı Maç Kolik. Buradan Fenerbahçenin sonraki 5 maçını tarihleri ile bul", 5, "next", "Maçkolik"),
+    ("Galatasaray'ın önümüzdeki üç maçı ne zaman?", 3, "next", ""),
+    ("Fenerbahçe fikstürü ne?", 5, "next", ""),
+    ("Fenerbahçe'nin son 5 maçı", 5, "result", ""),
+    ("Fenerbahçe'nin son maçı kaç kaç bitti?", 1, "result", ""),   # "son maç" içindeki "on" sayı değil
+])
+def test_parse_count_and_site(text, count, mode, site):
+    q = parse(text)
+    assert (q.count, q.mode, q.site) == (count, mode, site)
+
+
+def test_lists_several_upcoming_matches_and_names_the_real_source():
+    q = FixtureQuery("Fenerbahce", "next", count=5, site="Maçkolik")
+    reply = fixtures.answer(q, NOW, CLIENT)
+    assert reply.startswith("Fenerbahçe'nin sonraki 2 maçı: yarın, 17 Ekim Cumartesi saat 19.00, Alanyaspor ile evinde")
+    assert "Slavia Prag ile evinde, Şampiyonlar Ligi" in reply
+    assert "Programda şimdilik 2 maç görünüyor." in reply
+    assert reply.endswith("(Maçkolik yerine ESPN'in fikstür verisinden aldım; maç programı aynıdır.)")
+
+
+def test_lists_last_results():
+    reply = fixtures.answer(FixtureQuery("Fenerbahce", "result", count=3), NOW, CLIENT)
+    assert reply == "Fenerbahçe'nin son 1 maçı: 14 Ekim Çarşamba, Aston Villa ile 0-6 mağlubiyet (Şampiyonlar Ligi)."

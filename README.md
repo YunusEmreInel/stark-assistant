@@ -56,7 +56,7 @@ rates, football fixtures, earthquakes).
 | **Voice conversation** | "Stark, fotosentez nedir?" (*what is photosynthesis?*) — keep talking within 10 s without saying "Stark" again |
 | **Interrupting** | Say "Stark" while it is speaking; "Stark, dur" (*stop*) just silences it |
 | **Current information** | "Hava nasıl?" (*how's the weather?*), "Dolar kaç lira?" (*USD to TRY?*), "Gündemde neler var?" (*what's in the news?*) |
-| **Football fixtures and results** | "Galatasaray'ın yarınki maçı saat kaçta?" (*what time is Galatasaray's match tomorrow?*) — Turkish Süper Lig and major European leagues |
+| **Football fixtures and results** | "Galatasaray'ın yarınki maçı saat kaçta?" (*what time is Galatasaray's match tomorrow?*), "Fenerbahçe'nin sonraki 5 maçı" (*Fenerbahçe's next 5 matches*) — Turkish Süper Lig and major European leagues |
 | **Earthquakes** | "Son deprem nerede oldu?" (*where was the last earthquake?*) — from Kandilli Observatory data |
 | **Morning briefing** | "Günaydın" (*good morning*) → date, weather, today's/tomorrow's plans, notes, headlines |
 | **Memory** | "Bunu hatırla: en sevdiğim renk mavi" (*remember: my favourite colour is blue*), "Neleri hatırlıyorsun?" |

@@ -39,10 +39,12 @@ MONTHS = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağ
           "Aralık"]
 DAYS = ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar"]
 
-RESULT = re.compile(r"son\s+maç|kaç\s+kaç|skor|kazan|yendi|yenildi|kaybetti|berabere|sonuç|bitti|dünkü\s+maç|"
+RESULT = re.compile(r"son\s+(?:\d{1,2}\s+|iki\s+|üç\s+|dört\s+|beş\s+|altı\s+|yedi\s+|sekiz\s+|dokuz\s+|on\s+)?maç|"
+                    r"kaç\s+kaç|skor|kazan|yendi|yenildi|kaybetti|berabere|sonuç|bitti|dünkü\s+maç|"
                     r"\bdün\b.*maç", re.I)
 UPCOMING = re.compile(r"\byarın\w*|ne\s+zaman|saat\s+kaç|\bkaçta|hangi\s+(?:gün|kanal)|sonraki|sıradaki|"
-                      r"gelecek\s+maç|önümüzdeki|bugün\w*\s+maç|bugünkü|\bmaçı\s+var\s+mı|maç\s+var\s+mı", re.I)
+                      r"gelecek\s+maç|önümüzdeki|bugün\w*\s+maç|bugünkü|\bmaçı\s+var\s+mı|maç\s+var\s+mı|fikstür|"
+                      r"maç\s+programı", re.I)
 OTHER_SPORT = re.compile(r"basketbol|voleybol|hentbol|kadın|euroleague|u19|altyapı", re.I)
 
 
@@ -51,6 +53,8 @@ class FixtureQuery:
     team: str           # ESPN adı: "Fenerbahce"
     mode: str           # "next" | "result"
     day: int | None = None  # bugüne göre gün farkı: 1 = yarın, 0 = bugün, -1 = dün
+    count: int = 1          # "sonraki 5 maçı", "son 3 maçı", "fikstürü" → birden fazla maç listelenir
+    site: str = ""          # kullanıcı bir site adı söylediyse (ör. Maçkolik): verinin nereden geldiği söylenir
 
 
 def _fold(s: str) -> str:
@@ -113,7 +117,8 @@ def find_foreign_team(text: str, client=None) -> str | None:
 
 
 def _mode(text: str) -> tuple[str, int | None] | None:
-    if OTHER_SPORT.search(text) or not re.search(r"maç|skor|kaç\s+kaç|oyna|kazan|yendi|yenildi|berabere", text, re.I):
+    if OTHER_SPORT.search(text) or not re.search(r"maç|skor|kaç\s+kaç|oyna|kazan|yendi|yenildi|berabere|fikstür",
+                                                 text, re.I):
         return None
     day = 1 if re.search(r"\byarın", text, re.I) else 0 if re.search(r"\bbugün", text, re.I) else \
         -1 if re.search(r"\bdün", text, re.I) else None
@@ -122,6 +127,27 @@ def _mode(text: str) -> tuple[str, int | None] | None:
     if UPCOMING.search(text):
         return "next", day
     return None
+
+
+NUMBER_WORDS = {"iki": 2, "üç": 3, "dört": 4, "beş": 5, "altı": 6, "yedi": 7, "sekiz": 8, "dokuz": 9, "on": 10}
+MAX_COUNT = 10
+SITES = re.compile(r"ma[çc]\s*kolik|sahadan|transfermarkt|flashscore|sofascore|tff|uefa", re.I)
+
+
+def _count(text: str) -> int:
+    """Kaç maç isteniyor: "sonraki 5 maçını", "önümüzdeki üç maç", "son 5 maçı", "fikstürü" (5)."""
+    m = re.search(r"(?<![\wçğıöşü])(\d{1,2}|" + "|".join(NUMBER_WORDS) + r")\s+maç", text, re.I)  # "son maç" ≠ "on maç"
+    if m:
+        raw = m.group(1).lower()
+        return max(1, min(MAX_COUNT, int(raw) if raw.isdigit() else NUMBER_WORDS[raw]))
+    if re.search(r"fikstür|maç\s+programı|maçları\b|maçlarını", text, re.I):
+        return 5
+    return 1
+
+
+def _site(text: str) -> str:
+    m = SITES.search(text)
+    return "Maçkolik" if m and re.match(r"ma[çc]\s*kolik", m.group(0), re.I) else (m.group(0) if m else "")
 
 
 def is_match_question(text: str) -> bool:
@@ -134,7 +160,7 @@ def parse(text: str, foreign: bool = False, client=None) -> FixtureQuery | None:
     if not mode:
         return None
     team = find_team(text) or (find_foreign_team(text, client) if foreign else None)
-    return FixtureQuery(team, *mode) if team else None
+    return FixtureQuery(team, *mode, count=_count(text), site=_site(text)) if team else None
 
 
 # ---- veri ----
@@ -206,6 +232,29 @@ def _score_line(m: Match, team: str) -> str:
 
 
 def answer(q: FixtureQuery, now: datetime | None = None, client=None) -> str:
+    reply = _answer(q, now, client)
+    if q.site:  # kullanıcı siteyi söyledi: verinin başka yerden geldiğini açıkça belirt
+        reply += f" ({q.site} yerine ESPN'in fikstür verisinden aldım; maç programı aynıdır.)"
+    return reply
+
+
+def _fixture_line(m: Match, team: str, today) -> str:
+    place = "evinde" if m.home == team else "deplasmanda"
+    opp = tr(m.away if m.home == team else m.home)
+    return f"{_when(m, today)} saat {m.when:%H.%M}, {opp} ile {place}, {m.league}"
+
+
+def _result_line(m: Match, team: str, today) -> str:
+    us_home = m.home == team
+    ours, theirs = (m.home_score, m.away_score) if us_home else (m.away_score, m.home_score)
+    opp = tr(m.away if us_home else m.home)
+    if ours is None or theirs is None:
+        return f"{_when(m, today)}, {opp}: skor yok"
+    result = "galibiyet" if ours > theirs else "mağlubiyet" if ours < theirs else "beraberlik"
+    return f"{_when(m, today)}, {opp} ile {ours}-{theirs} {result} ({m.league})"
+
+
+def _answer(q: FixtureQuery, now: datetime | None = None, client=None) -> str:
     now = now or datetime.now().astimezone()  # maç saati bilgisayarın saat diliminde söylenir
     tz = now.tzinfo
     today = now.date()
@@ -220,6 +269,11 @@ def answer(q: FixtureQuery, now: datetime | None = None, client=None) -> str:
                     f"{tr(m.home)} {m.home_score}, {tr(m.away)} {m.away_score}.")
         if not matches:
             return f"{gen(name)} programda görünen bir maçı yok patron."
+        if q.count > 1:
+            shown = matches[:q.count]
+            lines = "; ".join(_fixture_line(m, q.team, today) for m in shown)
+            note = "" if len(shown) == q.count else f" Programda şimdilik {len(shown)} maç görünüyor."
+            return f"{gen(name)} sonraki {len(shown)} maçı: {lines}.{note}"
         target = [m for m in matches if q.day is not None and (m.when.date() - today).days == q.day]
         m = (target or matches)[0]
         place = "evinde" if m.home == q.team else "deplasmanda"
@@ -239,6 +293,9 @@ def answer(q: FixtureQuery, now: datetime | None = None, client=None) -> str:
             return f"{day_word} {gen(name)} oynadığı bir maç yok patron."
     if not played:
         return f"{gen(name)} bu sezon oynanmış maçını bulamadım patron."
+    if q.count > 1:
+        shown = [m for m in played if m.state == "post"][-q.count:][::-1]  # en yeni başta
+        return f"{gen(name)} son {len(shown)} maçı: " + "; ".join(_result_line(m, q.team, today) for m in shown) + "."
     m = played[-1]
     if m.state == "in":
         return f"Maç şu an oynanıyor patron ({m.clock}): {tr(m.home)} {m.home_score}, {tr(m.away)} {m.away_score}."
