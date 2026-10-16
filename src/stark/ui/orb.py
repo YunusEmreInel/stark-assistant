@@ -60,6 +60,7 @@ class OrbWidget(QWidget):
         self.arcs = [_Arc(rnd) for _ in range(52)]
         self.sparks = [_Spark(rnd) for _ in range(260)]
         self.ticks = [(rnd.uniform(0, 360), rnd.uniform(2, 14), rnd.random()) for _ in range(70)]
+        self.window_active = True          # ana pencere önde mi (uykuda ve arkadayken animasyon durur)
         self._timer = QTimer(self)
         self._timer.timeout.connect(self._step)
         self.setMinimumSize(160, 160)
@@ -67,14 +68,25 @@ class OrbWidget(QWidget):
 
     def set_state(self, state: State) -> None:
         self.state = state
-        active = state not in (State.IDLE, State.PAUSED, State.ERROR, State.STOPPED)
-        self._timer.setInterval(int(1000 / (FPS_ACTIVE if active else FPS_IDLE)))
-        if self.isVisible():
-            self._timer.start()
+        self._update_timer()
         self.update()
 
+    def set_window_active(self, active: bool) -> None:
+        self.window_active = active
+        self._update_timer()
+
+    def _update_timer(self) -> None:
+        """Uykuda ve pencere arkadayken (ör. oyun oynarken) küre çizilmez: açık pencerede 20 kare/sn çizim
+        uykudaki işlemci kullanımının çoğuydu. Uyanınca ya da pencereye geçince yeniden hareket eder."""
+        active = self.state not in (State.IDLE, State.PAUSED, State.ERROR, State.STOPPED)
+        self._timer.setInterval(int(1000 / (FPS_ACTIVE if active else FPS_IDLE)))
+        if self.isVisible() and (active or self.window_active):
+            self._timer.start()
+        else:
+            self._timer.stop()
+
     def showEvent(self, e):
-        self._timer.start()
+        self._update_timer()
         super().showEvent(e)
 
     def hideEvent(self, e):

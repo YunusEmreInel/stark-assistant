@@ -3,7 +3,7 @@ import html
 import re
 import time
 
-from PySide6.QtCore import QSize, Qt, Signal
+from PySide6.QtCore import QEvent, QSize, Qt, Signal
 from PySide6.QtGui import QCloseEvent, QIcon
 from PySide6.QtWidgets import (QDialog, QFrame, QHBoxLayout, QLabel, QPushButton, QTextBrowser, QToolButton,
                                QVBoxLayout, QWidget)
@@ -255,6 +255,12 @@ class MainWindow(QWidget):
         self.hint.setText("Yeni sohbet başladı")
 
     # ---- pencere ----
+    def changeEvent(self, e) -> None:
+        if e.type() in (QEvent.Type.ActivationChange, QEvent.Type.WindowStateChange):
+            # Pencere arkada ya da simge durumundayken uykudaki küre çizilmesin
+            self.orb.set_window_active(self.isActiveWindow() and not self.isMinimized())
+        super().changeEvent(e)
+
     def closeEvent(self, e: QCloseEvent) -> None:
         # X uygulamayı kapatmaz; tepside çalışmaya devam eder
         e.ignore()

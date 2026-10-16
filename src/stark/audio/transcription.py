@@ -56,6 +56,8 @@ class Transcriber:
         self._seq = itertools.count()
         self.main = None
         self.wake = None
+        self.main_on_gpu = False
+        self._main_lock = threading.Lock()  # boşaltma/yükleme ile tanıma aynı anda olmasın
         self.learned_names: Callable[[], list[str]] = lambda: []  # motor hafızaya bağlar
 
     def load(self) -> None:
@@ -74,10 +76,32 @@ class Transcriber:
                 raise
             device = "cpu"
             self.main = WhisperModel(self.s.whisper_model, device="cpu", compute_type="int8", cpu_threads=4)
-        # Uyandırma kontrolü de ekran kartındaysa orada: işlemcide ~120 MB, ekran kartında ~20 MB bellek
-        self.wake = (WhisperModel("tiny", device="cuda", compute_type="int8_float16") if device == "cuda"
-                     else WhisperModel("tiny", device="cpu", compute_type="int8", cpu_threads=2))
+        self.main_on_gpu = device == "cuda"
+        # Uyandırma kontrolü her zaman işlemcide: uykuda asıl model ekran kartından çıkarıldığında da
+        # "Stark" duyulabilsin (2 sn ses ~0,4 sn, yalnızca konuşma algılanınca çalışır)
+        self.wake = WhisperModel("tiny", device="cpu", compute_type="int8", cpu_threads=2)
         threading.Thread(target=self._run, name="asr", daemon=True).start()
+
+    # ---- uykuda ekran kartını boşaltma ----
+    def unload_main(self) -> bool:
+        """Asıl modeli ekran kartından çıkarır (~1 GB boşalır, ~60 MB sürücü kaydı kalır). True: boşaltıldı."""
+        if not self.main_on_gpu or self.main is None:
+            return False
+        with self._main_lock:
+            if self.main.model.model_is_loaded:
+                self.main.model.unload_model()
+                return True
+        return False
+
+    def preload_main(self) -> None:
+        """Uyanınca arka planda geri yükler (~3,5 sn); "Efendim patron" ve soru söylenirken biter."""
+        if self.main_on_gpu and self.main is not None and not self.main.model.model_is_loaded:
+            threading.Thread(target=self._ensure_main, name="asr-load", daemon=True).start()
+
+    def _ensure_main(self) -> None:
+        with self._main_lock:
+            if not self.main.model.model_is_loaded:
+                self.main.model.load_model()
 
     def check_wake(self, segment: np.ndarray) -> None:
         try:
@@ -105,12 +129,15 @@ class Transcriber:
                 if kind == "wake":
                     self._handle_wake(audio)
                 else:
-                    lang = self._pick_language(audio) if self.s.language == "auto" else self.s.language
-                    prompt = PROMPTS.get(lang, "")
-                    if lang == "tr":
-                        # "Bornova" gibi yerel adlar ve öğretilen özel adlar doğru yazılsın
-                        prompt += places.whisper_hint(self.s.city, self.learned_names())
-                    text, detected, conf = self._run_model(self.main, audio, lang, prompt=prompt or None)
+                    with self._main_lock:  # uykudan sonra boşaltılmışsa önce yüklenir
+                        if not self.main.model.model_is_loaded:
+                            self.main.model.load_model()
+                        lang = self._pick_language(audio) if self.s.language == "auto" else self.s.language
+                        prompt = PROMPTS.get(lang, "")
+                        if lang == "tr":
+                            # "Bornova" gibi yerel adlar ve öğretilen özel adlar doğru yazılsın
+                            prompt += places.whisper_hint(self.s.city, self.learned_names())
+                        text, detected, conf = self._run_model(self.main, audio, lang, prompt=prompt or None)
                     text = "" if HALLUCINATIONS.search(text) else strip_wake(text)
                     self.on_transcript(session, text, detected, bool(text) and conf < UNSURE_LOGPROB)
             except Exception as e:  # noqa: BLE001

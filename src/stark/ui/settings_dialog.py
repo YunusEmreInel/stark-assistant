@@ -111,7 +111,8 @@ class SettingsDialog(QDialog):
         f.addRow("Uykudan sonra bellekten çıkar", self.unload)
         f.addRow("Konuşma tanıma", self.asr)
         note = QLabel("medium: Türkçe'de en doğru (~1 sn). small: daha hızlı ama daha çok hata yapar. Dil modeli bellekten "
-                      "çıkınca ~1,3 GB boşalır; “Stark” deyince siz konuşurken yeniden yüklenir.")
+                      "ve konuşma tanıma modeli ekran kartından çıkar (ekran kartında ~3,8 GB boşalır); “Stark” deyince siz "
+                      "konuşurken yeniden yüklenir.")
         note.setObjectName("hint")
         note.setWordWrap(True)
         f.addRow(note)

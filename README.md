@@ -150,7 +150,7 @@ Open Settings with the **gear** button at the bottom of the window ("Ayarlar"):
 | **İnternet erişimi** (*internet access*) | **Off** by default. Turn it on for news, weather, exchange rates, fixtures and earthquakes |
 | **Varsayılan şehir** (*default city*) | Used for weather and local questions |
 | **Bilgi sorularını doğrula** (*verify factual questions*) | Questions with precise answers ("how many, who, when") are checked online (5–15 s) |
-| **Uykudan sonra bellekten çıkar** (*unload after sleep*) | Minutes after Stark goes to sleep before the language model is removed from memory (default 1) |
+| **Uykudan sonra bellekten çıkar** (*unload after sleep*) | Minutes after Stark goes to sleep before the models are removed from memory and the GPU (default 1) |
 | **Windows açılınca başlat** (*start with Windows*) | Launch Stark automatically |
 
 **Optional — district names:** speech recognition sometimes misspells local district names. If you list your
@@ -249,11 +249,18 @@ The local 4B language model is small, so its own knowledge is not trusted. Inste
 
 ## Performance and memory
 
-<p align="center"><img src="docs/images/performance.png" alt="Measured resource usage, sleep cycle and response times" width="640"></p>
+<p align="center"><img src="docs/images/resource-usage.png" alt="Measured resource usage, sleep cycle and response times" width="640"></p>
 
-- **While sleeping:** Stark uses ~15 MB of RAM; the language model is unloaded 1 minute after it goes to sleep
+Stark is meant to be used alongside other work — including games and GPU-heavy apps — so it gives the hardware
+back while it waits:
+
+- **Sleep cycle:** 10 s of silence after an answer → sleep. One minute later both the language model and the
+  speech-recognition model are removed from the GPU, and Stark's memory pages are returned to Windows
   (`llama-server` disappears from Task Manager).
-- **When you say "Stark":** the language model reloads while you are speaking (~3 s).
+- **While sleeping (window in the background):** ~15–85 MB RAM, ~0.2% CPU, 60–100 MB GPU memory, 0% GPU use.
+  Only a tiny CPU model listens for "Stark"; the orb animation stops while the window isn't in front.
+- **When you say "Stark":** both models reload while you are speaking (~4–5 s), so the first answer after a
+  long pause can be a few seconds slower; later answers are not affected.
 - **Measured times** (entry-level NVIDIA card with 4 GB): speech-to-text ~1 s, first spoken words of a normal
   answer ~2.5–3 s, answers that need a web search 7–20 s, fixtures/earthquakes/calculation/dictionary ~1 s.
 - Without an NVIDIA card everything runs on the CPU; choosing **small** under Settings → speech recognition

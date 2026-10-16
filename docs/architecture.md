@@ -31,8 +31,10 @@ back to `IDLE` after 10 s without speech in LISTENING. Also `PAUSED`, `ERROR`, `
   being spoken are treated as echo. A short echo guard is applied when switching from speaking to listening.
 - Closing phrases ("teşekkürler", *thanks*) go straight to IDLE; "dur/sus" (*stop/quiet*) silently returns to
   LISTENING.
-- One minute after entering IDLE, the language model is unloaded from Ollama and the process working set is
-  trimmed; the model is preloaded again as soon as the wake word is heard.
+- One minute after entering IDLE, the language model is unloaded from Ollama, the Whisper model is unloaded from
+  the GPU (wake-word checks run on a tiny CPU model) and the process working set is trimmed; both models are
+  preloaded again as soon as the wake word is heard. The orb animation stops while asleep and the window is
+  not in front.
 
 ## Layers against hallucination
 

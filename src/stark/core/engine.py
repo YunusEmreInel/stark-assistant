@@ -806,8 +806,13 @@ class Engine:
         """Beklemede 1 dk geçince modellerin bellekteki sayfalarını Windows'a geri ver (≈600 MB → ~15 MB).
         Sayfalar önbellekte kalır, "Stark" deyince geri gelir; diğer programlar gerekirse o belleği kullanır."""
         if generation == self._idle_generation:
-            if self.s.llm_idle_unload_min > 0 and not self.llm.idle_unloaded():
-                self.llm.unload()  # "Stark" deyince siz konuşurken yeniden yüklenir (~3 sn)
+            if self.s.llm_idle_unload_min > 0:
+                if not self.llm.idle_unloaded():
+                    self.llm.unload()  # "Stark" deyince siz konuşurken yeniden yüklenir (~3 sn)
+                # Konuşma tanıma modeli de ekran kartından çıkar (1,1 GB → ~60 MB): oyun/ekran kartı kullanan
+                # programlar uykudaki Stark'tan etkilenmesin. "Stark"ı işlemcideki küçük model duyar.
+                if generation == self._idle_generation:
+                    self.transcriber.unload_main()
             if generation != self._idle_generation:
                 return  # boşaltırken uyandırıldı
             try:
@@ -825,10 +830,12 @@ class Engine:
             t = threading.Timer(60 * max(1, self.s.llm_idle_unload_min), self._trim_if_idle, args=(self._idle_generation,))
             t.daemon = True
             t.start()
-        if state is State.LISTENING and self.llm.idle_unloaded():
-            # Dil modeli boşta bellekten çıkmıştı: siz konuşurken (~3 sn) yeniden yüklensin
-            self.llm.last_used = time.monotonic()
-            threading.Thread(target=self._warm_llm, name="llm-warm", daemon=True).start()
+        if state in (State.LISTENING, State.CAPTURING, State.TRANSCRIBING):
+            # Uykuda bellekten çıkan modeller siz konuşurken (~3-4 sn) geri yüklensin
+            self.transcriber.preload_main()
+            if self.llm.idle_unloaded():
+                self.llm.last_used = time.monotonic()
+                threading.Thread(target=self._warm_llm, name="llm-warm", daemon=True).start()
         if state is State.LISTENING and "first_audio" in self._timings:
             t = self._timings
             base = t.get("speech_end", 0)
