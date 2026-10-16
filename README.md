@@ -1,298 +1,314 @@
-# Stark — Türkçe sesli kişisel asistan
+# Stark — a local, Turkish-speaking voice assistant for Windows
 
-**Stark**, Windows bilgisayarınızda **tamamen ücretsiz ve yerel** çalışan, Türkçe (ve İngilizce) konuşan bir sesli
-asistandır. "Stark" diye seslenince uyanır, sorunuzu dinler, cevabı sesli söyler. Konuşmanızı yazıya çeviren model,
-cevabı üreten dil modeli ve ses tamamen sizin bilgisayarınızda çalışır: abonelik, API anahtarı ya da bulut hesabı
-gerekmez; konuşmalarınız ve hafızası bilgisayarınızdan çıkmaz.
+**Stark** is a voice assistant that runs **entirely on your own Windows PC, for free**. It speaks Turkish (and
+English): say "Stark", ask your question, and it answers out loud. Speech recognition, the language model and the
+voice all run locally — no subscription, no API key, no cloud account. Your conversations and memory never leave
+your computer.
 
-İnternet isteğe bağlıdır ve yalnızca güncel bilgi gereken sorularda (haber, hava, döviz, maç, deprem) kullanılır.
+Internet access is optional and only used for questions that need current information (news, weather, exchange
+rates, football fixtures, earthquakes).
 
 <table>
   <tr>
-    <td align="center" width="55%"><img src="docs/images/ana-panel.png" alt="Stark ana paneli" width="420"></td>
-    <td align="center" width="45%"><img src="docs/images/mini-panel.png" alt="Pencere kapalıyken sağ altta beliren mini panel" width="380"></td>
+    <td align="center" width="55%"><img src="docs/images/ana-panel.png" alt="Stark main panel" width="420"></td>
+    <td align="center" width="45%"><img src="docs/images/mini-panel.png" alt="Mini panel shown in the bottom-right corner when the main window is closed" width="380"></td>
   </tr>
   <tr>
-    <td align="center"><b>Ana panel</b> — altın küre Stark'ın durumunu (dinliyor, düşünüyor, konuşuyor) ve sesini gösterir; konuşma yazılı olarak da görünür.</td>
-    <td align="center"><b>Mini panel</b> — ana pencere kapalıyken "Stark" deyince ekranın sağ altında belirir; o an kullandığınız programdan odağı çalmaz.</td>
+    <td align="center"><b>Main panel</b> — the golden orb shows Stark's state (listening, thinking, speaking) and reacts to its voice; the conversation is also shown as text.</td>
+    <td align="center"><b>Mini panel</b> — when the main window is closed, saying "Stark" brings up this small panel in the bottom-right corner without stealing focus from the app you are using.</td>
   </tr>
 </table>
 
-> Bu bir kişisel projedir; hatasız olduğu iddia edilmez. Yerel çalışan küçük bir dil modeli kullandığı için bazı
-> cevaplar yanlış olabilir — kodda buna karşı korumalar vardır (bkz. [Nasıl doğru cevap vermeye çalışır?](#nasıl-doğru-cevap-vermeye-çalışır)).
+> This is a personal project and is not claimed to be error-free. Because it uses a small local language model,
+> some answers can be wrong — the code has several safeguards against this (see
+> [How it tries to stay accurate](#how-it-tries-to-stay-accurate)).
+
+> **Language note:** Stark talks to you in Turkish, and its interface is in Turkish. The voice commands below are
+> the Turkish phrases you actually say, with their meaning in parentheses. If you speak English to it, it answers
+> in English, but the built-in commands are Turkish.
 
 ---
 
-## İçindekiler
+## Contents
 
-- [Neler yapabilir?](#neler-yapabilir)
-- [Gereksinimler](#gereksinimler)
-- [Kurulum (adım adım)](#kurulum-adım-adım)
-- [İlk açılış ve ayarlar](#i̇lk-açılış-ve-ayarlar)
-- [Kullanım ve komutlar](#kullanım-ve-komutlar)
-- [Veriler ve gizlilik](#veriler-ve-gizlilik)
-- [Güvenlik](#güvenlik)
-- [Nasıl doğru cevap vermeye çalışır?](#nasıl-doğru-cevap-vermeye-çalışır)
-- [Performans ve bellek](#performans-ve-bellek)
-- [Sorun giderme](#sorun-giderme)
-- [Bilinen sınırlamalar](#bilinen-sınırlamalar)
-- [Geliştirme](#geliştirme)
-- [Lisans](#lisans)
+- [Features](#features)
+- [Requirements](#requirements)
+- [Installation (step by step)](#installation-step-by-step)
+- [First launch and settings](#first-launch-and-settings)
+- [Usage and commands](#usage-and-commands)
+- [Data and privacy](#data-and-privacy)
+- [Security](#security)
+- [How it tries to stay accurate](#how-it-tries-to-stay-accurate)
+- [Performance and memory](#performance-and-memory)
+- [Troubleshooting](#troubleshooting)
+- [Known limitations](#known-limitations)
+- [Development](#development)
+- [License](#license)
 
 ---
 
-## Neler yapabilir?
+## Features
 
-| Özellik | Örnek |
+| Feature | Example (what you say) |
 |---|---|
-| **Sesli sohbet** | "Stark, fotosentez nedir?" — cevaptan sonra 10 sn içinde "Stark" demeden devam edebilirsiniz |
-| **Söz kesme** | Stark konuşurken "Stark" deyin; "Stark, dur" yalnızca susturur |
-| **Güncel bilgi** | "Hava nasıl?", "Dolar kaç lira?", "Gündemde neler var?", "Dolar neden yükseldi?" |
-| **Maç programı ve sonuçları** | "Galatasaray'ın yarınki maçı saat kaçta?", "Fenerbahçe'nin son maçı kaç kaç bitti?" (Süper Lig ve büyük Avrupa ligleri) |
-| **Deprem** | "Son deprem nerede oldu?", "İzmir'de deprem mi oldu?" (Kandilli Rasathanesi) |
-| **Günaydın özeti** | "Günaydın" → tarih, hava, bugünkü/yarınki planlarınız, notlar, gündem |
-| **Hafıza** | "Bunu hatırla: en sevdiğim renk mavi", "Neleri hatırlıyorsun?", "Unut: …" |
-| **Kendi kendine öğrenme** | Sohbetten "yarın sınavım var", "daha kısa konuş" gibi bilgileri kendisi çıkarır (kapatılabilir) |
-| **Sesle öğretme** | "Şunu öğren: …", "Hayır, doğrusu şu: …", "Neleri öğrendin?" |
-| **Notlar** | "Not al: Cuma kitap iade et", "Notlarımı oku", "Notlarımı masaüstüne aktar" |
-| **Bilgisayar kontrolü** | "Chrome'u aç", "Chrome'da Python dersleri ara", "YouTube'da Barış Manço aç", "Ekran görüntüsü al", "Sesi kıs", "Ekranı kilitle" |
-| **Dosyalar** | "Masaüstündeki ödev dosyasını aç", "Son indirdiğim dosyayı aç" (program dosyaları güvenlik için çalıştırılmaz) |
-| **Kesin hesaplama** | "345 çarpı 27 kaç?", "1000 liraya yüzde 20 KDV ekle", "5 mil kaç kilometre?" — sonucu kod hesaplar |
-| **İngilizce-Türkçe sözlük** | "According kelimesinin Türkçesi ne?", "Serendipity ne demek?" (Vikisözlük verisi, internetsiz) |
-| **Ekranı okuma** | "Ekranda ne yazıyor?", "Bunu özetle", "Bunu İngilizceye çevir", "Kopyaladığımı özetle" |
-| **İngilizce** | İngilizce konuşursanız İngilizce cevap verir |
+| **Voice conversation** | "Stark, fotosentez nedir?" (*what is photosynthesis?*) — keep talking within 10 s without saying "Stark" again |
+| **Interrupting** | Say "Stark" while it is speaking; "Stark, dur" (*stop*) just silences it |
+| **Current information** | "Hava nasıl?" (*how's the weather?*), "Dolar kaç lira?" (*USD to TRY?*), "Gündemde neler var?" (*what's in the news?*) |
+| **Football fixtures and results** | "Galatasaray'ın yarınki maçı saat kaçta?" (*what time is Galatasaray's match tomorrow?*) — Turkish Süper Lig and major European leagues |
+| **Earthquakes** | "Son deprem nerede oldu?" (*where was the last earthquake?*) — from Kandilli Observatory data |
+| **Morning briefing** | "Günaydın" (*good morning*) → date, weather, today's/tomorrow's plans, notes, headlines |
+| **Memory** | "Bunu hatırla: en sevdiğim renk mavi" (*remember: my favourite colour is blue*), "Neleri hatırlıyorsun?" |
+| **Learns by itself** | Picks up things like "yarın sınavım var" (*I have an exam tomorrow*) from conversation (can be turned off) |
+| **Teaching by voice** | "Şunu öğren: …" (*learn this: …*), "Hayır, doğrusu şu: …" (*no, the correct answer is: …*) |
+| **Notes** | "Not al: Cuma kitap iade et" (*note: return the book on Friday*), "Notlarımı oku" (*read my notes*) |
+| **Computer control** | "Chrome'u aç" (*open Chrome*), "YouTube'da … aç" (*play … on YouTube*), "Ekran görüntüsü al" (*take a screenshot*), "Sesi kıs" (*volume down*) |
+| **Files** | "Masaüstündeki ödev dosyasını aç" (*open the homework file on my desktop*) — executables are never run |
+| **Exact calculations** | "345 çarpı 27 kaç?" (*345 times 27?*), "1000 liraya yüzde 20 KDV ekle" (*add 20% VAT*), unit conversion — computed by code |
+| **English–Turkish dictionary** | "According kelimesinin Türkçesi ne?" (*what is "according" in Turkish?*) — offline, Wiktionary data |
+| **Screen reading** | "Ekranda ne yazıyor?" (*what's on the screen?*), "Bunu özetle" (*summarise this*), "Bunu İngilizceye çevir" (*translate this to English*) |
 
-Tüm komutların listesi uygulamada başlıktaki **ⓘ** düğmesindedir (üzerine gelince özet, tıklayınca kılavuz).
+The full command list is in the app under the **ⓘ** button in the title bar (hover for a summary, click for the guide).
 
 ---
 
-## Gereksinimler
+## Requirements
 
-| | En az | Önerilen |
+| | Minimum | Recommended |
 |---|---|---|
-| İşletim sistemi | Windows 10 (64 bit) | Windows 11 |
-| Bellek (RAM) | 8 GB | 16 GB |
-| Ekran kartı | Gerekmez (işlemcide çalışır, daha yavaş) | NVIDIA, 4 GB veya üzeri |
-| Disk | ~8 GB boş alan | |
-| Mikrofon | Dizüstü mikrofonu ya da kulaklık | Kulaklık (söz kesme daha güvenilir) |
-| İnternet | Yalnızca kurulumda | Güncel bilgi soruları için |
+| Operating system | Windows 10 (64-bit) | Windows 11 |
+| RAM | 8 GB | 16 GB |
+| Graphics card | Not required (runs on the CPU, slower) | NVIDIA with 4 GB VRAM or more |
+| Disk space | ~8 GB free | |
+| Microphone | Laptop microphone or headset | Headset (interrupting works more reliably) |
+| Internet | Only during installation | For current-information questions |
 
-Kurulmuş olması gerekenler (ikisi de ücretsiz):
+You need these installed first (both free):
 
 1. **Python 3.11** — [python.org/downloads/release/python-3119](https://www.python.org/downloads/release/python-3119/)
-   (kurarken **"Add python.exe to PATH"** kutusunu işaretleyin). Python 3.12 ve üzeri desteklenmez.
-2. **Ollama** (yerel dil modeli çalıştırıcı) — [ollama.com/download](https://ollama.com/download)
-   ya da PowerShell'de: `winget install Ollama.Ollama`
+   (tick **"Add python.exe to PATH"** during setup). Python 3.12 and newer are not supported.
+2. **Ollama** (runs the local language model) — [ollama.com/download](https://ollama.com/download),
+   or in PowerShell: `winget install Ollama.Ollama`
 
 ---
 
-## Kurulum (adım adım)
+## Installation (step by step)
 
-### 1. Projeyi indirin
+### 1. Download the project
 
-**Git kullanmıyorsanız:** Bu sayfanın üstündeki yeşil **Code** düğmesi → **Download ZIP**. ZIP'i örneğin
-`Belgeler\stark-asistan` klasörüne çıkarın.
+**Without Git:** click the green **Code** button at the top of this page → **Download ZIP**, then extract it, e.g.
+to `Documents\stark-assistant`.
 
-**Git kullanıyorsanız:**
+**With Git:**
 
 ```powershell
-git clone https://github.com/YunusEmreInel/stark-asistan.git
-cd stark-asistan
+git clone https://github.com/YunusEmreInel/stark-assistant.git
+cd stark-assistant
 ```
 
-### 2. Kurulum betiğini çalıştırın
+### 2. Run the setup script
 
-Proje klasöründe adres çubuğuna `powershell` yazıp Enter'a basın (ya da klasörde sağ tık → "Terminalde aç"), sonra:
+In the project folder, type `powershell` in the File Explorer address bar and press Enter (or right-click →
+"Open in Terminal"), then run:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts\setup_windows.ps1
 ```
 
-Betik sırasıyla şunları yapar (yönetici yetkisi gerekmez, sistemdeki Python'a dokunmaz):
+The script does the following (no administrator rights needed, your system Python is not touched):
 
-| Adım | Ne yapar | Boyut |
+| Step | What it does | Size |
 |---|---|---|
-| Sanal ortam | `.venv` klasörüne gerekli Python kütüphanelerini kurar; NVIDIA kart varsa CUDA kütüphanelerini de | ~1–2 GB |
-| Dil modeli | `ollama pull qwen3:4b-instruct` | ~2,5 GB |
-| Ses modelleri | Konuşma algılama, Türkçe/İngilizce sesler (Piper) | ~330 MB |
-| Konuşma tanıma | Whisper medium ve tiny | ~1,6 GB |
-| Sözlük | Vikisözlük'ten İngilizce-Türkçe sözlük oluşturur (bir kez) | ~90 MB, 3–20 dk |
-| Başlatıcı | `launcher\Stark.exe`'yi derler, masaüstüne ve Başlat menüsüne **Stark** kısayolu koyar | |
-| Testler | Otomatik testleri çalıştırır | |
+| Virtual environment | Installs the Python libraries into `.venv`; also installs CUDA libraries if you have an NVIDIA card | ~1–2 GB |
+| Language model | `ollama pull qwen3:4b-instruct` | ~2.5 GB |
+| Voice models | Speech detection, Turkish/English voices (Piper) | ~330 MB |
+| Speech recognition | Whisper medium and tiny | ~1.6 GB |
+| Dictionary | Builds the English–Turkish dictionary from Wiktionary (once) | ~90 MB, 3–20 min |
+| Launcher | Compiles `launcher\Stark.exe` and adds a **Stark** shortcut to the desktop and Start menu | |
+| Tests | Runs the automated tests | |
 
-Toplam süre internet hızınıza göre 15–60 dakikadır. Bir adım hata verirse betiği yeniden çalıştırmanız yeterlidir;
-tamamlanan adımlar tekrar indirilmez.
+It takes 15–60 minutes depending on your connection. If a step fails, just run the script again — finished
+steps are not downloaded twice. (The script's messages are in Turkish.)
 
-### 3. Başlatın
+### 3. Start it
 
-Masaüstündeki **Stark** simgesine çift tıklayın. Küre altın rengine dönünce hazırdır (ilk açılış 15–30 sn).
+Double-click **Stark** on your desktop. It is ready when the orb turns gold (first start takes 15–30 s).
 
 ---
 
-## İlk açılış ve ayarlar
+## First launch and settings
 
-Pencerenin altındaki **dişli** düğmesiyle Ayarlar'ı açın:
+Open Settings with the **gear** button at the bottom of the window ("Ayarlar"):
 
-| Ayar | Açıklama |
+| Setting | Description |
 |---|---|
-| **Adınız** | İsteğe bağlı; Stark adınızı bilir |
-| **Hitap** | Varsayılan "patron" (resmi "siz" ile). İstediğiniz hitabı yazabilirsiniz |
-| **Mikrofon / Hoparlör** | "Windows varsayılanı" çoğu zaman doğrudur. "Giriş seviyesi" çubuğu konuşunca hareket etmeli |
-| **Uyandırma testi** | "Stark" deyin; algılanınca burada görünür |
-| **İnternet erişimi** | Varsayılan **kapalı**. Haber, hava, döviz, maç ve deprem soruları için açın |
-| **Varsayılan şehir** | Hava durumu ve yerel sorular için |
-| **Bilgi sorularını doğrula** | "Kaç, kim, ne zaman" gibi kesin cevaplı sorular internetten kontrol edilir (5–15 sn) |
-| **Uykudan sonra bellekten çıkar** | Stark uykuya geçtikten bu kadar dakika sonra dil modeli bellekten çıkar (varsayılan 1 dk) |
-| **Windows açılınca başlat** | Stark otomatik açılır |
+| **Adınız** (*your name*) | Optional; Stark will know your name |
+| **Hitap** (*form of address*) | Default "patron" (*boss*), with the formal "siz". Change it to whatever you like |
+| **Mikrofon / Hoparlör** | "Windows varsayılanı" (*Windows default*) is usually right. The input level bar should move when you speak |
+| **Uyandırma testi** (*wake test*) | Say "Stark"; it shows up here when detected |
+| **İnternet erişimi** (*internet access*) | **Off** by default. Turn it on for news, weather, exchange rates, fixtures and earthquakes |
+| **Varsayılan şehir** (*default city*) | Used for weather and local questions |
+| **Bilgi sorularını doğrula** (*verify factual questions*) | Questions with precise answers ("how many, who, when") are checked online (5–15 s) |
+| **Uykudan sonra bellekten çıkar** (*unload after sleep*) | Minutes after Stark goes to sleep before the language model is removed from memory (default 1) |
+| **Windows açılınca başlat** (*start with Windows*) | Launch Stark automatically |
 
-**İsteğe bağlı — ilçe adları:** Konuşma tanıma yerel ilçe adlarını bazen yanlış yazar. Şehrinizin ilçelerini
-`%USERPROFILE%\.stark\yerler.json` dosyasına yazarsanız doğru tanınır:
+**Optional — district names:** speech recognition sometimes misspells local district names. If you list your
+city's districts in `%USERPROFILE%\.stark\yerler.json`, they are recognised correctly:
 
 ```json
 { "İzmir": ["Bornova", "Karşıyaka", "Buca", "Konak"] }
 ```
 
-Tek tek de öğretebilirsiniz: "Şunu öğren: Bornova, İzmir'in bir ilçesidir".
+You can also teach them one by one: "Şunu öğren: Bornova, İzmir'in bir ilçesidir" (*learn: Bornova is a district of İzmir*).
 
 ---
 
-## Kullanım ve komutlar
+## Usage and commands
 
-1. **"Stark"** deyin → "Efendim patron". Sonra sorunuzu söyleyin. Ya da tek nefeste: "Stark, hava nasıl?"
-2. Cevaptan sonra **10 saniye** içinde konuşursanız sohbet sürer; susarsanız beklemeye döner.
-3. **"Teşekkürler" / "Sağ ol" / "Bu kadar"** → hemen beklemeye döner.
+1. Say **"Stark"** → it answers "Efendim patron". Then ask your question. Or in one breath: "Stark, hava nasıl?"
+2. If you speak again within **10 seconds** after the answer, the conversation continues; otherwise it goes back to sleep.
+3. **"Teşekkürler" / "Sağ ol" / "Bu kadar"** (*thanks / that's all*) → it goes back to sleep right away.
 
-| Kısayol | İşlev |
+| Shortcut | Action |
 |---|---|
-| **Ctrl + Alt + W** | Uyandır (Stark arka plandayken de) |
-| **Ctrl + Alt + S** | Konuşan Stark'ı durdur |
-| Pencerenin **X**'i | Kapatmaz, saatin yanındaki tepsiye gizler |
-| **Güç düğmesi** / tepsi → "Tamamen çık" | Stark'ı tamamen kapatır |
+| **Ctrl + Alt + W** | Wake Stark (also when it is in the background) |
+| **Ctrl + Alt + S** | Stop Stark while it is speaking |
+| Window **X** | Does not quit; hides Stark to the system tray |
+| **Power button** / tray → "Tamamen çık" | Quits Stark completely |
 
-Bir cevaptan şüphelenirseniz **"internetten araştır"** deyin: önceki sorunuz internette aranır. Belirli bir
-sitede aratmak için: "Vikipedi'den bak", "Maçkolik sitesine bak".
+If you doubt an answer, say **"internetten araştır"** (*look it up online*): your previous question is searched on
+the web. To search a specific site: "Vikipedi'den bak" (*check Wikipedia*), "Maçkolik sitesine bak".
 
-Tüm komutlar ve örnekler uygulamadaki **ⓘ Kullanım kılavuzu**ndadır.
+All commands with examples are in the app's **ⓘ guide**.
 
 ---
 
-## Veriler ve gizlilik
+## Data and privacy
 
-- Tüm kişisel veriler **yalnızca bilgisayarınızda**, `%USERPROFILE%\.stark` klasöründedir:
+- All personal data stays **on your computer only**, in `%USERPROFILE%\.stark`:
 
-  | Dosya | İçerik |
+  | File | Contents |
   |---|---|
-  | `settings.json` | Ayarlarınız |
-  | `stark.db` | Sohbet geçmişi, hafıza, notlar (SQLite; silinen kayıtlar dosyadan da temizlenir) |
-  | `yerler.json` | (İsteğe bağlı) şehrinizin ilçeleri |
-  | `models\` | Ses, konuşma tanıma ve sözlük modelleri |
-  | `yedekler\` | Günlük yedek (son 7 gün) |
-  | `stark_hata.log` | Yalnızca teknik hata kayıtları |
+  | `settings.json` | Your settings |
+  | `stark.db` | Conversation history, memory, notes (SQLite; deleted records are wiped from the file too) |
+  | `yerler.json` | (Optional) your city's districts |
+  | `models\` | Voice, speech recognition and dictionary models |
+  | `yedekler\` | Daily backups (last 7 days) |
+  | `stark_hata.log` | Technical error log only |
 
-- **Ses kaydı diske yazılmaz.** Mikrofon sesi bellekte işlenir ve atılır.
-- **Ekran okuma görüntüsü diske yazılmaz**; yazı Windows'un kendi yazı tanımasıyla bilgisayarınızda okunur.
-- **Sohbetleriniz, hafızanız ve notlarınız internete gönderilmez.**
-- İnternet açıksa yalnızca güncel bilgi sorularında şunlar dışarı gider: arama anahtar kelimeleri (DuckDuckGo,
-  Google/Bing Haberler RSS), hava için şehir adı (Open-Meteo), döviz için para birimi (Frankfurter / Avrupa Merkez
-  Bankası), maç programı için takım (ESPN), deprem listesi isteği (Kandilli). Bu isteklere kişisel bilgi eklenmez.
-- Kendi kendine öğrenme bir model eğitimi değildir; yalnızca sizin söylediklerinizden kısa notlar çıkarır.
-  Geçmiş ve hafıza ekranında görüp silebilirsiniz.
-- Silinen bilgiler en fazla 7 gün günlük yedeklerde kalır; Ayarlar → **"Yedekleri sil"** ile hemen silinir.
-
----
-
-## Güvenlik
-
-- **Dil modeli hiçbir şey çalıştıramaz.** Bilgisayar komutları (uygulama açma, arama, dosya oluşturma…) yalnızca
-  kodda tanımlı kalıplarla tanınır ve izinli bir listeyle sınırlıdır; modelin ürettiği metin komut olarak çalıştırılmaz.
-- **Dosya silmez, üzerine yazmaz.** Masaüstünde oluşturulan dosya aynı adda dosya varsa yeni bir adla oluşturulur.
-- **Program dosyaları açılmaz:** `.exe`, `.bat`, `.ps1`, `.msi`, `.lnk`, `.iso` gibi türler yalnızca klasörde seçili
-  gösterilir.
-- **İnternetten gelen içerik veri olarak işlenir:** web sayfaları, haberler ve ekrandan okunan yazılar dil modeline
-  "talimat değil, veri" olarak verilir; içlerindeki yönlendirmeler uygulanmaz.
-- **Kaynakta olmayan sayılar reddedilir:** internetten gelen cevaptaki skor, tarih, fiyat ve saatler kaynaklarla
-  karşılaştırılır; uyuşmazsa cevap okunmaz.
-- Hesap makinesi `eval` kullanmaz; yalnızca sayı ve dört işlem içeren ifadeleri hesaplar.
-- Tek kopya kontrolü yalnızca aynı Windows kullanıcısının bağlanabildiği yerel bir kanal kullanır; ağ portu açılmaz.
-
-Bir güvenlik sorunu bulursanız lütfen herkese açık bir issue yerine GitHub'da
-[özel güvenlik bildirimi](https://github.com/YunusEmreInel/stark-asistan/security/advisories/new) gönderin.
+- **Audio is never written to disk.** Microphone audio is processed in memory and discarded.
+- **Screen-reading images are never written to disk**; text is recognised locally with Windows' built-in OCR.
+- **Your conversations, memory and notes are never sent to the internet.**
+- With internet access on, only current-information questions go out: search keywords (DuckDuckGo, Google/Bing
+  News RSS), the city name for weather (Open-Meteo), currency codes (Frankfurter / European Central Bank), the team
+  for fixtures (ESPN), and the earthquake list request (Kandilli). No personal information is added to these requests.
+- Self-learning is not model training; it only extracts short notes from what you say. You can review and delete
+  them in the history and memory window.
+- Deleted information can remain in the daily backups for up to 7 days; Settings → **"Yedekleri sil"** (*delete
+  backups*) removes them immediately.
 
 ---
 
-## Nasıl doğru cevap vermeye çalışır?
+## Security
 
-Yerel 4B dil modeli küçük olduğu için kendi bilgisine güvenilmez. Stark bu yüzden:
+- **The language model cannot run anything.** Computer commands (opening apps, searching, creating files…) are
+  recognised only by fixed patterns in the code and limited to an allow-list; text generated by the model is never
+  executed as a command.
+- **It never deletes or overwrites files.** If a file with the same name already exists on the desktop, a new name
+  is used.
+- **Executables are not opened:** types such as `.exe`, `.bat`, `.ps1`, `.msi`, `.lnk`, `.iso` are only shown
+  selected in their folder.
+- **Content from the internet is treated as data:** web pages, news and text read from the screen are given to
+  the model as "data, not instructions"; instructions inside them are ignored.
+- **Numbers not found in the sources are rejected:** scores, dates, prices and times in an internet-based answer
+  are checked against the sources; if they don't match, the answer is not spoken.
+- The calculator does not use `eval`; it only evaluates expressions made of numbers and arithmetic operators.
+- The single-instance check uses a local channel that only the same Windows user can connect to; no network port
+  is opened.
 
-- **Kesin cevaplı işleri kodla yapar:** hesaplama, birim çevirme, sözlük, maç programı (ESPN), deprem (Kandilli),
-  hava (Open-Meteo), döviz (Avrupa Merkez Bankası) — bu cevapları dil modeli üretmez.
-- **Bilgi sorularını internetten doğrular** ("kaç, kim, ne zaman") ve kaynakları ekranda gösterir.
-- **Uydurma sayıları yakalar:** cevaptaki her sayı kaynaklarda aranır.
-- **Yanlış duyulanı sorar:** konuşma tanıma emin değilse "tekrar eder misiniz?" der.
-- **Kişisel bilgide uydurmaz:** hafızasında olmayan bir şeyi sorarsanız bilmediğini söyler.
+If you find a security issue, please report it privately via
+[GitHub security advisories](https://github.com/YunusEmreInel/stark-assistant/security/advisories/new) instead of
+opening a public issue.
 
 ---
 
-## Performans ve bellek
+## How it tries to stay accurate
 
-- **Beklerken:** Stark ~15 MB bellek kullanır; dil modeli uykuya geçtikten 1 dakika sonra bellekten çıkar
-  (Görev Yöneticisi'nde `llama-server` kaybolur).
-- **"Stark" deyince:** dil modeli siz konuşurken yeniden yüklenir (~3 sn).
-- **Ölçülen süreler** (4 GB'lık giriş seviyesi NVIDIA kartta): konuşmayı yazıya çevirme ~1 sn, sohbet cevabının ilk
-  sesi ~2,5–3 sn, internetten araştırmalı cevaplar 7–20 sn, maç/deprem/hesap/sözlük ~1 sn.
-- NVIDIA kartı yoksa her şey işlemcide çalışır; Ayarlar → Konuşma tanıma → **small** seçmeniz önerilir.
+The local 4B language model is small, so its own knowledge is not trusted. Instead, Stark:
+
+- **Handles precise tasks with code:** calculation, unit conversion, the dictionary, football fixtures (ESPN),
+  earthquakes (Kandilli), weather (Open-Meteo) and exchange rates (European Central Bank) — none of these answers
+  are produced by the language model.
+- **Verifies factual questions online** ("how many, who, when") and shows the sources on screen.
+- **Catches invented numbers:** every number in an answer is looked up in the sources.
+- **Asks when it misheard:** if speech recognition is unsure, it asks you to repeat.
+- **Doesn't invent personal facts:** if you ask about something not in its memory, it says it doesn't know.
 
 ---
 
-## Sorun giderme
+## Performance and memory
 
-| Sorun | Çözüm |
+- **While sleeping:** Stark uses ~15 MB of RAM; the language model is unloaded 1 minute after it goes to sleep
+  (`llama-server` disappears from Task Manager).
+- **When you say "Stark":** the language model reloads while you are speaking (~3 s).
+- **Measured times** (entry-level NVIDIA card with 4 GB): speech-to-text ~1 s, first spoken words of a normal
+  answer ~2.5–3 s, answers that need a web search 7–20 s, fixtures/earthquakes/calculation/dictionary ~1 s.
+- Without an NVIDIA card everything runs on the CPU; choosing **small** under Settings → speech recognition
+  ("Konuşma tanıma") is recommended.
+
+---
+
+## Troubleshooting
+
+| Problem | Fix |
 |---|---|
-| **Açılmıyor** | `%USERPROFILE%\.stark\stark_hata.log` dosyasına bakın; her açılış oraya bir satır yazar |
-| **"Dil modeline ulaşamadım"** | Ollama'nın kurulu ve açık olduğundan emin olun (Stark kapalıysa kendisi açmayı dener). `ollama list` komutunda `qwen3:4b-instruct` görünmeli |
-| **"Stark"ı duymuyor** | Ayarlar → Ses → giriş seviyesi çubuğu hareket ediyor mu? "Uyandırma testi"ni deneyin; doğru mikrofonu seçin |
-| **Kendi sesini duyup kendini kesiyor** | Kulaklık kullanın ya da hoparlör sesini azaltın |
-| **İnternet soruları cevapsız** | Ayarlar → İnternet erişimi açık mı? Ücretsiz arama motorları sık sorguda kısa süre sonuç vermeyebilir |
-| **Ekranı okuyamıyor** | Windows Ayarlar → Saat ve dil → Dil: Türkçe dil paketinin kurulu olması gerekir |
-| **Görev çubuğunda Python simgesi** | Eski sabitlemeyi kaldırıp Stark açıkken yeniden sabitleyin |
-| **Kurulum betiği "çalıştırılamaz" diyor** | Komutu yukarıdaki gibi `-ExecutionPolicy Bypass` ile çalıştırın |
+| **It won't start** | Check `%USERPROFILE%\.stark\stark_hata.log`; every start writes a line there |
+| **"Dil modeline ulaşamadım"** (*can't reach the language model*) | Make sure Ollama is installed and running (Stark tries to start it). `ollama list` should show `qwen3:4b-instruct` |
+| **It doesn't hear "Stark"** | Settings → Ses (*audio*): does the input level bar move? Try the wake test; pick the right microphone |
+| **It hears itself and interrupts itself** | Use a headset or lower the speaker volume |
+| **Internet questions get no answer** | Is internet access on in Settings? Free search engines may briefly return nothing after many queries |
+| **Screen reading doesn't work** | The Turkish language pack must be installed: Windows Settings → Time & language → Language |
+| **Python icon on the taskbar** | Unpin the old pin, then pin Stark again while it is running |
+| **Setup script "cannot be loaded"** | Run it exactly as shown above, with `-ExecutionPolicy Bypass` |
 
 ---
 
-## Bilinen sınırlamalar
+## Known limitations
 
-- Yerel 4B dil modelinin genel bilgisi sınırlıdır ve Türkçe çekimleri ara sıra kusurludur. Uydurmaya karşı
-  korumalar vardır ama hatasızlık garanti edilmez; önemli bilgileri kaynağından doğrulayın.
-- Uyandırma kelimesi konuşanı ayırt etmez; ortamdaki başka biri de "Stark" diyebilir.
-- Hoparlörle kullanımda söz kesme, kulaklığa göre daha az güvenilirdir.
-- Ücretsiz arama motorları zaman zaman sonuç vermeyebilir; çok yerel olaylar haberlere düşmemiş olabilir.
-- Maç programı yalnızca Süper Lig ve büyük Avrupa liglerindeki takımlar için yapılandırılmış veriden gelir;
-  diğerleri haberlerden aranır.
-- Yalnızca Windows'ta çalışır.
+- The local 4B language model has limited general knowledge and occasionally makes Turkish grammar mistakes.
+  There are safeguards against made-up answers, but correctness is not guaranteed — verify important information
+  at its source.
+- The wake word does not recognise who is speaking; anyone nearby can say "Stark".
+- Interrupting is less reliable with speakers than with a headset.
+- Free search engines may occasionally return nothing; very local events may not be in the news yet.
+- Structured fixture data only covers teams in the Turkish Süper Lig and major European leagues; other teams are
+  searched in the news.
+- Windows only.
 
 ---
 
-## Geliştirme
+## Development
 
 ```powershell
-.\.venv\Scripts\python.exe -m pytest -q          # otomatik testler
-.\.venv\Scripts\python.exe -m stark --cli        # arayüzsüz (konsol) sürüm
-powershell -File scripts\build_launcher.ps1      # Stark.exe ve kısayolları yeniden oluştur
+.\.venv\Scripts\python.exe -m pytest -q          # automated tests
+.\.venv\Scripts\python.exe -m stark --cli        # console version without the UI
+powershell -File scripts\build_launcher.ps1      # rebuild Stark.exe and the shortcuts
+.\.venv\Scripts\python.exe scripts\make_screenshots.py   # regenerate the README images
 ```
 
-- Mimari ve uydurmaya karşı katmanlar: [docs/architecture.md](docs/architecture.md)
-- Yeni bir sesli komut eklerken `src/stark/ui/help_text.py` (ⓘ kılavuzu) ve bu README güncellenmelidir;
-  `tests/test_help.py` kılavuzda olmayan komut türlerinde başarısız olur.
-- Veriler AppData yerine `%USERPROFILE%\.stark` altındadır: Microsoft Store paketli uygulamalardan başlatılan
-  süreçlerin AppData yazıları pakete özel bir klasöre yönlendirilir.
+- Architecture and the anti-hallucination layers: [docs/architecture.md](docs/architecture.md)
+- When adding a new voice command, update `src/stark/ui/help_text.py` (the ⓘ guide) and this README;
+  `tests/test_help.py` fails for command types missing from the guide.
+- Data lives in `%USERPROFILE%\.stark` instead of AppData: processes started from Microsoft Store (MSIX) packaged
+  apps have their AppData writes redirected to a package-private folder.
+- Code comments are mostly in Turkish.
 
-**Kullanılan açık kaynak bileşenler:** PySide6 (arayüz), faster-whisper (konuşma tanıma), sherpa-onnx (konuşma
-algılama ve Piper sesleri), Ollama + Qwen3 (dil modeli), trafilatura (web sayfası okuma), Vikisözlük (sözlük).
-Ayrıntılar ve lisansları: [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+**Open-source components used:** PySide6 (UI), faster-whisper (speech recognition), sherpa-onnx (speech detection
+and Piper voices), Ollama + Qwen3 (language model), trafilatura (web page extraction), Wiktionary (dictionary).
+Details and licenses: [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
 ---
 
-## Lisans
+## License
 
-Stark'ın kendi kodu [MIT lisansı](LICENSE) ile dağıtılır. İndirilen modellerin ve verilerin kendi lisansları
-vardır (bazı Piper sesleri yalnızca ticari olmayan kullanım içindir) — bkz. [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+Stark's own code is released under the [MIT License](LICENSE). The downloaded models and data have their own
+licenses (some Piper voices are for non-commercial use only) — see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
