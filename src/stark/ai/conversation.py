@@ -107,6 +107,27 @@ class Conversation:
         msgs.append({"role": "user", "content": SPEAKER + user_text})
         return msgs
 
+    def build_agent(self, user_text: str, language: str) -> list[dict]:
+        """Ajan için kısa istem: kimlik, hitap, ilgili hafıza ve son 4 tur. Tam sohbet istemi (yetenek listesi,
+        "internetin yok" kuralları) hem gereksiz hem uzundu: Groq'un dakikalık token sınırı hemen doluyordu."""
+        self._pending_user = user_text
+        rule = ADDRESS_RULE.format(tr=self.s.address_tr, en=self.s.address_en,
+                                   tr_cap=self.s.address_tr[:1].upper() + self.s.address_tr[1:])
+        system = ("You are Stark, the user's voice assistant on their Windows PC. Your reply is spoken aloud.\n"
+                  + rule)
+        if self.s.user_name:
+            system += f"\nThe user's name is {self.s.user_name}."
+        if self.s.city:
+            system += f"\nThe user lives in {self.s.city}, Türkiye (use it for local questions like weather)."
+        system += self._memory_block(user_text)
+        msgs = [{"role": "system", "content": system}]
+        for u, a in self.turns[-4:]:
+            msgs += [{"role": "user", "content": u}, {"role": "assistant", "content": a[:400]}]
+        if language in LANG_HINT:
+            msgs[0]["content"] += "\n" + LANG_HINT[language]
+        msgs.append({"role": "user", "content": user_text})
+        return msgs
+
     def build_research(self, user_text: str, language: str, note: str) -> list[dict]:
         """Araştırma cevabı için kısa istem. Ekran kartı istemi ~150 token/sn okuyor: tam sohbet istemi
         (yetenekler, hafıza, 8 tur geçmiş) + kaynaklar 2000 token = 14 sn bekleme demekti."""

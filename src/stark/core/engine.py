@@ -11,6 +11,7 @@ from typing import Protocol
 
 import numpy as np
 
+from ..ai.agent import CURRENT, Agent
 from ..ai.conversation import Conversation
 from ..ai.cloud import HybridLLM
 from ..ai.ollama_client import OllamaError
@@ -706,9 +707,41 @@ class Engine:
                 self._finish_tool_turn(session, text, self._address(reply), f"\n\n{detail}" if detail else "")
             threading.Thread(target=run, name="desktop", daemon=True).start()
             return
+        if self.llm.cloud_active and self.s.internet_enabled:
+            # İnternetteki büyük model soruyu kendisi değerlendirir; gerekirse arar, okur, yeniden arar
+            threading.Thread(target=self._agent_turn, args=(session, text, lang), name="agent", daemon=True).start()
+            return
         if self._internet(session, text, lang):
             return
         self._stream_llm(session, self.conversation.build(text, lang))
+
+    def _agent_turn(self, session: int, text: str, lang: str) -> None:
+        announce = "Hemen bakıyorum patron." if lang != "en" else "Let me check, boss."
+        agent = Agent(self.llm, self.s, on_first_tool=lambda: self._say(session, self._address(announce)))
+        try:
+            current = (bool(CURRENT.search(text)) or router.route(text, self.s.city) is not None
+                       or bool(router.FACT.search(text))
+                       or fixtures.is_match_question(text) or quake.parse(text) is not None)
+            result = agent.run(self.conversation.build_agent(text, lang), lang, require_tool=current)
+        except Exception as e:  # noqa: BLE001 — ajan hatası sohbeti kilitlemesin: eski akışa dön
+            self._error(f"Ajan hatası: {e}")
+            result = None
+        if self.controller.session != session:
+            return  # bu arada iptal edildi / yeniden uyandırıldı
+        if result is None or not result.answer:
+            # İnternetteki modellerin hiçbiri yanıt vermedi: kelime kalıplı eski akış ve yerel model
+            if not self._internet(session, text, lang):
+                self._stream_llm(session, self.conversation.build(text, lang))
+            return
+        answer = strip_closers(humanize_dates(strip_emoji(result.answer), lang))
+        seen, lines = set(), []
+        for title, site, url in result.sources:
+            if url not in seen:
+                seen.add(url)
+                lines.append(f"[{len(lines) + 1}] {title} — {site} {url}")
+        links = "\n\nKaynaklar:\n" + "\n".join(lines) if lines else ""
+        self._finish_tool_turn(session, text, answer, links)
+        self._learn_async()
 
     def _dictionary(self, session: int, text: str, q: "dictionary.DictQuery") -> bool:
         """Sözlük cevabı (Vikisözlük verisi, kodla). False: sözlük sorusu değilmiş, sohbete devam."""

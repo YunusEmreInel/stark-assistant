@@ -243,7 +243,7 @@ to larger models on free tiers, in this order, moving on when one hits its limit
 
 | Order | Service | Model | Free limit (Oct 2026, may change) |
 |---|---|---|---|
-| 1–2 | [Groq](https://console.groq.com) | Qwen3.8 27B, then GPT-OSS 120B | ~1,000 requests and 200K tokens per day per model, 8K tokens per minute |
+| 1–2 | [Groq](https://console.groq.com) | GPT-OSS 120B, then Qwen3.8 27B | ~1,000 requests and 200K tokens per day per model, 8K tokens per minute |
 | 3 | [Gemini](https://aistudio.google.com) (optional) | Gemini Flash-Lite | Not published; roughly 500 requests per day |
 | 4–5 | [OpenRouter](https://openrouter.ai) | Gemma 4 31B, then Nemotron 120B (`:free`) | 50 requests per day |
 | last | This PC | qwen3:4b-instruct via Ollama | Unlimited |
@@ -254,6 +254,13 @@ to larger models on free tiers, in this order, moving on when one hits its limit
 - **Privacy:** with smart mode on, your messages, the recent conversation and relevant memory entries go to these
   services. Gemini's free tier may use prompts to improve Google's products, and free OpenRouter providers may log
   prompts. Commands, calculations, fixtures, earthquakes, weather and exchange rates are still handled on the PC.
+- **The model researches by itself.** When internet access is on, the online model gets read-only tools —
+  web search, news search (Turkish or English sources), reading a page, football fixtures (ESPN), earthquakes
+  (Kandilli), weather (Open-Meteo), exchange rates and a calculator — and decides what to look up, reads the results,
+  searches again if they're weak (up to 5 rounds) and then answers. For time-bound questions ("what happened",
+  "when is", news, prices, weather, matches) it must use a tool before answering, so it can't answer from memory.
+  The tools only fetch data; opening apps, files and other commands are still recognised by code, never by the model.
+  OpenRouter's free models are used only for plain chat, not for tool use (they tended to invent results instead).
 - The model that answered is shown at the bottom of the window (e.g. "Groq · Qwen3.8 27B"). In smart mode the local
   model isn't loaded at all unless every service fails, so the GPU stays free.
 

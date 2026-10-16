@@ -50,12 +50,31 @@ back to `IDLE` after 10 s without speech in LISTENING. Also `PAUSED`, `ERROR`, `
 ## Language model layer
 
 `ai/cloud.py` (`HybridLLM`) has the same interface as the Ollama client. With smart mode on it tries Groq
-(Qwen3.8 27B → GPT-OSS 120B) → Gemini Flash-Lite → OpenRouter (Gemma 4 31B → Nemotron 120B) through their
-OpenAI-compatible APIs, streaming the answer. A provider that returns 429 is skipped for its `retry-after` time
-(5 min for "temporarily rate-limited", otherwise 1 h); a rejected key is skipped for 12 h. If every provider fails,
+(GPT-OSS 120B → Qwen3.8 27B) → Gemini Flash-Lite → OpenRouter (Gemma 4 31B → Nemotron 120B) through their
+OpenAI-compatible APIs, streaming the answer. A provider that returns 429 is skipped for the time it asks for ("try again in 7.5s" or `retry-after`;
+5 min for "temporarily rate-limited", 1 h for a daily limit); a rejected key is skipped for 12 h. If every provider fails,
 the local Ollama model answers. `<think>` blocks are removed before speech. Keys are stored with Windows DPAPI
 (`ai/keys.py`). With smart mode on, the forced web search for "how many / who / when" questions is skipped (the larger
 model decides whether to search), and a failed web search falls back to the model's own knowledge.
+
+### Agent (smart mode + internet)
+
+`ai/agent.py` runs a function-calling loop on the online model: web_search, news_search, read_page,
+football_matches, earthquakes, weather, exchange_rate, calculate. All tools are read-only and go through the same
+SSRF guard as the rest of the web code (`web.is_public_url`). Hardening against invented answers, each from a
+measured failure:
+
+- **Forced tool use:** if the question is time-bound (`agent.CURRENT`, the router, `FACT`, fixture or earthquake
+  patterns), the first round is sent with `tool_choice="required"`; a plain-text reply is discarded and the model is
+  asked again. Without this, models answered "what happened today" from memory in under a second.
+- **No OpenRouter in the loop:** its free models invented tool results ("22°C (Open-Meteo)" without calling it).
+- **Provider switch mid-loop:** tool steps from another model are dropped and their results merged into one
+  "information already gathered" system note (Gemini rejects foreign tool calls; a `[I called tools…]` transcript
+  was copied by the next model as its answer). Replies that look like a tool call written as text are rejected.
+- **Short prompt** (`Conversation.build_agent`): identity, address rule, name, city, relevant memory and the last
+  4 turns, to stay within Groq's 8K tokens-per-minute limit.
+
+If the loop returns nothing (every provider failed), the older keyword-driven research path answers.
 
 ## Data
 
