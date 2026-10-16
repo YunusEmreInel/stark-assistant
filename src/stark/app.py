@@ -132,12 +132,14 @@ class StarkApp:
             return
         new = dlg.result_settings()
         dlg.apply_autostart()
+        dlg.apply_keys()
         needs_restart = any(getattr(new, f) != getattr(self.settings, f) for f in RESTART_FIELDS)
         new.save()
         # Yeniden başlatma gerektirmeyenler hemen uygulanır (bileşenler aynı Settings nesnesini paylaşır)
         for k, v in asdict(new).items():
             setattr(self.settings, k, v)
         self.engine.controller.listen_timeout = new.listen_timeout_s
+        self.engine.llm.reload()  # yeni anahtarlar / internet modu hemen geçerli
         if needs_restart:
             r = QMessageBox.question(self.window, "Stark", "Bu değişiklikler için Stark yeniden başlamalı. Şimdi?")
             if r == QMessageBox.StandardButton.Yes:

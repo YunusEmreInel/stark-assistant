@@ -12,7 +12,8 @@ from typing import Protocol
 import numpy as np
 
 from ..ai.conversation import Conversation
-from ..ai.ollama_client import OllamaClient, OllamaError
+from ..ai.cloud import HybridLLM
+from ..ai.ollama_client import OllamaError
 from ..ai import search_planner
 from ..ai.sentence_stream import SentenceStream
 from ..ai.text_for_speech import humanize_dates, strip_emoji
@@ -120,7 +121,7 @@ class Engine:
         self.repo = Repository(DB_FILE)
         self.conversation = Conversation(settings, self.repo)
         self._last_saved: tuple[int, str] | None = None  # bu oturumda en son "hatırla" kaydı
-        self.llm = OllamaClient(settings)
+        self.llm = HybridLLM(settings, on_error=self._error)  # internet modu kapalıysa yalnızca Ollama
         self.tts_level = 0.0
         self._language = settings.language if settings.language != "auto" else "tr"
         self._timings: dict[str, float] = {}
@@ -403,7 +404,10 @@ class Engine:
             # Güncellik kuralları / açık "internette ara" komutu modelin "gerek yok" kararını geçersiz kılar.
             # Olay kelimeleri ("patla", "maç") kılmaz: "patlamış mısır tarifi" aranmasın.
             plan = (fallback.kind, fallback.query or router.keywords(text))
-        if plan is None and self.s.fact_check and router.FACT.search(text) and not self._about_user(text):
+        # Kesin cevaplı sorularda zorunlu arama yalnızca küçük yerel model için: internetteki büyük model bu tür
+        # bilgileri biliyor ve aramanın gerekip gerekmediğine yukarıdaki karar adımında kendisi karar veriyor
+        if plan is None and self.s.fact_check and not self.llm.cloud_active and router.FACT.search(text) \
+                and not self._about_user(text):
             # Kesin cevaplı bilgi sorusu ("kaç gezegen var?"): küçük modelin bilgisi güvenilmez, kontrol et
             plan = ("search", router.keywords(text))
         if self.controller.session != session:
@@ -447,6 +451,10 @@ class Engine:
                 return
         except web.SearchError as e:
             self._error(f"Arama sonucu alınamadı: {e}")
+            if self.llm.cloud_active and r.kind == "search":
+                # Arama motoru cevap vermedi: büyük model genel bilgi sorularını kendi bilgisinden cevaplayabilir
+                self._stream_llm(session, self.conversation.build(text, lang))
+                return
             reply = ("Arama motorundan sonuç alamadım patron. Biraz sonra tekrar dener misiniz?" if tr
                      else "The search engine returned nothing, boss. Could you try again in a moment?")
         except Exception as e:  # noqa: BLE001 — ağ yok, servis kapalı, ayrıştırma hatası
@@ -840,7 +848,9 @@ class Engine:
         if state is State.LISTENING and "first_audio" in self._timings:
             t = self._timings
             base = t.get("speech_end", 0)
-            self.ui.on_timing({k: round(v - base, 2) for k, v in t.items() if k != "speech_end"})
+            timing = {k: round(v - base, 2) for k, v in t.items() if k != "speech_end"}
+            timing["model"] = self.llm.last_label  # cevabı hangi model verdi (ekranın altında gösterilir)
+            self.ui.on_timing(timing)
             self._timings = {}
         self.ui.on_state(state)
 

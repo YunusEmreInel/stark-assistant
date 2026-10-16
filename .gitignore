@@ -21,6 +21,7 @@ launcher/stark.ico
 *.mp3
 settings.json
 yerler.json
+anahtarlar.bin
 models/
 yedekler/
 

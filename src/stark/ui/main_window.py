@@ -247,6 +247,8 @@ class MainWindow(QWidget):
     def show_timing(self, t: dict) -> None:
         if "first_audio" in t:
             self.footer_right.setText(f"Yanıt süresi {t['first_audio']:.1f} sn")
+        if t.get("model"):  # ör. "Groq · Qwen3.8 27B" ya da "yerel · qwen3:4b-instruct"
+            self.footer_left.setText(f"{t['model']}  ·  whisper {self.engine.s.whisper_model}")
 
     def _new_conversation(self) -> None:
         self.engine.new_conversation()

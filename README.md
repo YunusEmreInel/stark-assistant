@@ -2,11 +2,13 @@
 
 **Stark** is a voice assistant that runs **entirely on your own Windows PC, for free**. It speaks Turkish (and
 English): say "Stark", ask your question, and it answers out loud. Speech recognition, the language model and the
-voice all run locally — no subscription, no API key, no cloud account. Your conversations and memory never leave
-your computer.
+voice all run locally — no subscription, no API key, no cloud account. By default your conversations and memory
+never leave your computer.
 
 Internet access is optional and only used for questions that need current information (news, weather, exchange
-rates, football fixtures, earthquakes).
+rates, football fixtures, earthquakes). There is also an optional **smart mode** that sends the conversation to a
+larger online model on free tiers (Groq → Gemini → OpenRouter) for much better understanding; see
+[Smart mode](#smart-mode-optional-online-models).
 
 <table>
   <tr>
@@ -149,6 +151,7 @@ Open Settings with the **gear** button at the bottom of the window ("Ayarlar"):
 | **Uyandırma testi** (*wake test*) | Say "Stark"; it shows up here when detected |
 | **İnternet erişimi** (*internet access*) | **Off** by default. Turn it on for news, weather, exchange rates, fixtures and earthquakes |
 | **Varsayılan şehir** (*default city*) | Used for weather and local questions |
+| **İnternetteki model** (*smart mode*) | Off by default. Paste free Groq / Gemini / OpenRouter keys to use larger online models — see [Smart mode](#smart-mode-optional-online-models) |
 | **Bilgi sorularını doğrula** (*verify factual questions*) | Questions with precise answers ("how many, who, when") are checked online (5–15 s) |
 | **Uykudan sonra bellekten çıkar** (*unload after sleep*) | Minutes after Stark goes to sleep before the models are removed from memory and the GPU (default 1) |
 | **Windows açılınca başlat** (*start with Windows*) | Launch Stark automatically |
@@ -199,7 +202,7 @@ All commands with examples are in the app's **ⓘ guide**.
 
 - **Audio is never written to disk.** Microphone audio is processed in memory and discarded.
 - **Screen-reading images are never written to disk**; text is recognised locally with Windows' built-in OCR.
-- **Your conversations, memory and notes are never sent to the internet.**
+- **Your conversations, memory and notes are never sent to the internet** — unless you turn on smart mode (below).
 - With internet access on, only current-information questions go out: search keywords (DuckDuckGo, Google/Bing
   News RSS), the city name for weather (Open-Meteo), currency codes (Frankfurter / European Central Bank), the team
   for fixtures (ESPN), and the earthquake list request (Kandilli). No personal information is added to these requests.
@@ -232,6 +235,31 @@ If you find a security issue, please report it privately via
 opening a public issue.
 
 ---
+
+### Smart mode (optional online models)
+
+The local 4B model is small: it often misunderstands Turkish and invents details. Smart mode sends the conversation
+to larger models on free tiers, in this order, moving on when one hits its limit or fails:
+
+| Order | Service | Model | Free limit (Oct 2026, may change) |
+|---|---|---|---|
+| 1–2 | [Groq](https://console.groq.com) | Qwen3.8 27B, then GPT-OSS 120B | ~1,000 requests and 200K tokens per day per model, 8K tokens per minute |
+| 3 | [Gemini](https://aistudio.google.com) (optional) | Gemini Flash-Lite | Not published; roughly 500 requests per day |
+| 4–5 | [OpenRouter](https://openrouter.ai) | Gemma 4 31B, then Nemotron 120B (`:free`) | 50 requests per day |
+| last | This PC | qwen3:4b-instruct via Ollama | Unlimited |
+
+- Turn it on in **Settings → İnternetteki model** and paste your own free API keys. Keys are stored only on this PC
+  in `%USERPROFILE%\.stark\anahtarlar.bin`, encrypted with Windows DPAPI (bound to your Windows account); they are
+  never written to the settings file, logs or this repository.
+- **Privacy:** with smart mode on, your messages, the recent conversation and relevant memory entries go to these
+  services. Gemini's free tier may use prompts to improve Google's products, and free OpenRouter providers may log
+  prompts. Commands, calculations, fixtures, earthquakes, weather and exchange rates are still handled on the PC.
+- The model that answered is shown at the bottom of the window (e.g. "Groq · Qwen3.8 27B"). In smart mode the local
+  model isn't loaded at all unless every service fails, so the GPU stays free.
+
+Measured on the same Turkish questions: the local model took 5.7–16.8 s per answer and sometimes invented details
+(it guessed a university for "I'm a new graduate"); smart mode answered in 1–5 s (≈10 s when it decides to search
+the web) and kept the context of follow-up questions.
 
 ## How it tries to stay accurate
 

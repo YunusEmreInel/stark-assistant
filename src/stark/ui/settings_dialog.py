@@ -4,11 +4,12 @@ import time
 import winreg
 from dataclasses import replace
 
-from PySide6.QtCore import QTimer
-from PySide6.QtWidgets import (QCheckBox, QComboBox, QDialog, QDialogButtonBox, QDoubleSpinBox, QFormLayout,
+from PySide6.QtCore import Qt, QTimer
+from PySide6.QtWidgets import (QCheckBox, QComboBox, QDialog, QDialogButtonBox, QDoubleSpinBox, QFormLayout, QFrame,
                                QGroupBox, QHBoxLayout, QLabel, QLineEdit, QMessageBox, QProgressBar,
-                               QPushButton, QSpinBox, QVBoxLayout)
+                               QPushButton, QScrollArea, QSpinBox, QVBoxLayout, QWidget)
 
+from ..ai import keys as key_store
 from ..audio.capture import list_devices
 from ..config import BACKUP_DIR, MODELS_DIR, WHISPER_REVISIONS, Settings
 from ..memory import backup
@@ -136,6 +137,31 @@ class SettingsDialog(QDialog):
         net_note.setWordWrap(True)
         f.addRow(net_note)
 
+        # İnternetteki büyük model (isteğe bağlı)
+        saved = key_store.load()
+        self.cloud = QCheckBox("İnternetteki büyük modeli kullan (daha iyi anlama)")
+        self.cloud.setChecked(settings.cloud_enabled)
+        self.use_gemini = QCheckBox("Gemini'yi yedek olarak kullan")
+        self.use_gemini.setChecked(settings.cloud_use_gemini)
+        self.key_fields = {}
+        cloud = QGroupBox("İnternetteki model")
+        f = QFormLayout(cloud)
+        f.addRow(self.cloud)
+        for name, label, hint in (("groq", "Groq anahtarı", "console.groq.com → API Keys"),
+                                  ("gemini", "Gemini anahtarı", "aistudio.google.com → Get API key"),
+                                  ("openrouter", "OpenRouter anahtarı", "openrouter.ai → Keys")):
+            field = QLineEdit(saved.get(name, ""), placeholderText=hint)
+            field.setEchoMode(QLineEdit.EchoMode.Password)
+            self.key_fields[name] = field
+            f.addRow(label, field)
+        f.addRow(self.use_gemini)
+        cloud_note = QLabel("Sıra: Groq → Gemini → OpenRouter; limit dolarsa ya da internet yoksa bilgisayardaki "
+                            "model cevap verir. Açıkken sohbetiniz ve ilgili hafıza kayıtları bu servislere gider. "
+                            "Anahtarlar bu bilgisayarda Windows şifrelemesiyle saklanır.")
+        cloud_note.setObjectName("hint")
+        cloud_note.setWordWrap(True)
+        f.addRow(cloud_note)
+
         # Sistem
         self.autostart = QCheckBox("Windows açılınca Stark'ı başlat")
         self.autostart.setChecked(autostart_enabled())
@@ -166,10 +192,20 @@ class SettingsDialog(QDialog):
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
 
+        # Bölümler kaydırılabilir alanda; Kaydet/Vazgeç düğmeleri her zaman altta görünür
+        content = QWidget()
+        inner = QVBoxLayout(content)
+        inner.setContentsMargins(0, 0, 6, 0)
+        for w in (audio, talk, models, net, cloud, system):
+            inner.addWidget(w)
+        scroll = QScrollArea(widgetResizable=True, frameShape=QFrame.Shape.NoFrame)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        scroll.setWidget(content)
         lay = QVBoxLayout(self)
-        for w in (audio, talk, models, net, system):
-            lay.addWidget(w)
+        lay.addWidget(scroll, 1)
         lay.addWidget(buttons)
+        screen = self.screen().availableGeometry() if self.screen() else None
+        self.resize(560, min(820, int(screen.height() * 0.85)) if screen else 760)
 
         dark_title_bar(self)
         self._timer = QTimer(self, interval=80)
@@ -200,12 +236,16 @@ class SettingsDialog(QDialog):
             language=["tr", "en", "auto"][self.language.currentIndex()],
             internet_enabled=self.internet.isChecked(), city=self.city.text().strip(),
             fact_check=self.fact_check.isChecked(), user_name=self.user_name.text().strip(),
+            cloud_enabled=self.cloud.isChecked(), cloud_use_gemini=self.use_gemini.isChecked(),
             auto_learn=self.auto_learn.isChecked(),
             address_tr=self.address_tr.text().strip() or "patron",
             address_en=self.address_en.text().strip() or "boss",
             tts_voice_tr=self.voice.currentData() or self.s.tts_voice_tr,
             tts_speed=round(self.speed.value(), 2), listen_timeout_s=self.listen.value(),
             llm_model=self.llm.currentText().strip(), llm_idle_unload_min=self.unload.value(), whisper_model=self.asr.currentText())
+
+    def apply_keys(self) -> None:
+        key_store.save({name: field.text() for name, field in self.key_fields.items()})
 
     def apply_autostart(self) -> None:
         if self.autostart.isChecked() != autostart_enabled():

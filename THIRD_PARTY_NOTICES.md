@@ -51,3 +51,13 @@ them are included in this repository. Integrity checks:
 - **Google News / Bing News RSS**, **DuckDuckGo and the search engines used by ddgs**, **AA, TRT Haber, NTV,
   Hürriyet RSS feeds** — personal use; answers link to the original sources.
 - **YouTube** — only to open a search page or video when the user asks.
+
+## Online language models (only when smart mode is on)
+
+Used with the user's own free API keys, under each provider's terms:
+
+- **Groq** (Qwen3.8 27B, GPT-OSS 120B) — [terms](https://groq.com/terms-of-use/).
+- **Google Gemini API** (Gemini Flash-Lite, optional) — [terms](https://ai.google.dev/gemini-api/terms); free-tier
+  prompts may be used to improve Google's products outside the EEA, UK and Switzerland.
+- **OpenRouter** (free Gemma 4 31B, Nemotron 120B) — [terms](https://openrouter.ai/terms); free providers may log
+  prompts.

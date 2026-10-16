@@ -69,6 +69,11 @@ class Settings:
                                          # "Stark" deyince yeniden yüklenir (~3 sn, konuşurken). 0: hep bellekte
     llm_timeout_s: float = 60.0
     llm_temperature: float = 0.2
+    # İnternetteki büyük modeller (Groq → Gemini → OpenRouter → bilgisayardaki model). Açıkken sohbet bu servislere
+    # gider; anahtarlar ~/.stark/anahtarlar.bin içinde Windows DPAPI ile şifreli saklanır.
+    cloud_enabled: bool = False
+    cloud_use_gemini: bool = True
+    cloud_max_tokens: int = 700
     history_turns: int = 8
     barge_in: bool = True                # Stark konuşurken "Stark" deyince susup dinler
     auto_learn: bool = True             # konuşmalardan kalıcı bilgi çıkar (yalnızca kullanıcının söyledikleri)

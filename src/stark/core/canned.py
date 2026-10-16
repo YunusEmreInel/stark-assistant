@@ -4,7 +4,8 @@ import re
 
 INTRO = re.compile(r"kendini\s+tanıt|sen\s+kimsin|kimsin\s+sen|\badın\s+ne|ismin\s+ne|who\s+are\s+you|"
                    r"introduce\s+yourself|what'?s\s+your\s+name", re.I)
-ABILITIES = re.compile(r"ne(ler)?\s+yapabil|yeteneklerin|neler\s+biliyorsun\s+yapmayı|ne\s+işe\s+yarıyorsun|"
+# Yalnızca Stark'a sorulan biçim: "ne yapabilirsin(iz)". "Canım sıkkın, ne yapabilirim?" bir sohbettir.
+ABILITIES = re.compile(r"ne(ler)?\s+yapabil(ir)?sin(iz)?\b|yeteneklerin|neler\s+biliyorsun\s+yapmayı|ne\s+işe\s+yarıyorsun|"
                        r"what\s+can\s+you\s+do|your\s+capabilities", re.I)
 
 

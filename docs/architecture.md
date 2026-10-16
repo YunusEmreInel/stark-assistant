@@ -47,6 +47,16 @@ back to `IDLE` after 10 s without speech in LISTENING. Also `PAUSED`, `ERROR`, `
 5. "Yesterday/today" news is filtered by publication date; old results without a date are not presented as "latest".
 6. Every automatically learned fact is compared with the user's sentence (75% word overlap), otherwise it is not saved.
 
+## Language model layer
+
+`ai/cloud.py` (`HybridLLM`) has the same interface as the Ollama client. With smart mode on it tries Groq
+(Qwen3.8 27B → GPT-OSS 120B) → Gemini Flash-Lite → OpenRouter (Gemma 4 31B → Nemotron 120B) through their
+OpenAI-compatible APIs, streaming the answer. A provider that returns 429 is skipped for its `retry-after` time
+(5 min for "temporarily rate-limited", otherwise 1 h); a rejected key is skipped for 12 h. If every provider fails,
+the local Ollama model answers. `<think>` blocks are removed before speech. Keys are stored with Windows DPAPI
+(`ai/keys.py`). With smart mode on, the forced web search for "how many / who / when" questions is skipped (the larger
+model decides whether to search), and a failed web search falls back to the model's own knowledge.
+
 ## Data
 
 `%USERPROFILE%\.stark` (not AppData — AppData writes are redirected for processes started from MSIX-packaged apps):
