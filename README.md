@@ -42,6 +42,8 @@ larger online model on free tiers (Groq → Gemini → OpenRouter) for much bett
 - [Usage and commands](#usage-and-commands)
 - [Data and privacy](#data-and-privacy)
 - [Security](#security)
+- [Smart mode (optional online models)](#smart-mode-optional-online-models)
+  - [Getting the free API keys](#getting-the-free-api-keys)
 - [How it tries to stay accurate](#how-it-tries-to-stay-accurate)
 - [Performance and memory](#performance-and-memory)
 - [Troubleshooting](#troubleshooting)
@@ -136,6 +138,12 @@ steps are not downloaded twice. (The script's messages are in Turkish.)
 ### 3. Start it
 
 Double-click **Stark** on your desktop. It is ready when the orb turns gold (first start takes 15–30 s).
+
+### 4. (Optional, recommended) Turn on smart mode
+
+Stark works without this, using the small model on your PC. For much better understanding, get free API keys from
+Groq (required for smart mode), Gemini and OpenRouter (optional backups) — about 5 minutes, no credit card — and
+paste them into Settings. Step-by-step: [Getting the free API keys](#getting-the-free-api-keys).
 
 ---
 
@@ -236,7 +244,7 @@ opening a public issue.
 
 ---
 
-### Smart mode (optional online models)
+## Smart mode (optional online models)
 
 The local 4B model is small: it often misunderstands Turkish and invents details. Smart mode sends the conversation
 to larger models on free tiers, in this order, moving on when one hits its limit or fails:
@@ -267,6 +275,64 @@ to larger models on free tiers, in this order, moving on when one hits its limit
 Measured on the same Turkish questions: the local model took 5.7–16.8 s per answer and sometimes invented details
 (it guessed a university for "I'm a new graduate"); smart mode answered in 1–5 s (≈10 s when it decides to search
 the web) and kept the context of follow-up questions.
+
+### Getting the free API keys
+
+An API key is a password that lets Stark use a service on **your** account. All three services have a free tier
+and none of them asks for a credit card for it. You only need **Groq**; Gemini and OpenRouter are backups for when
+Groq's daily limit runs out. Website menus change from time to time — if a button has a slightly different name,
+look for "API keys".
+
+> **Keep keys secret.** Don't post them in chats, screenshots, GitHub issues or code. Anyone with your key can use
+> your quota. If one leaks, delete it on the same page and create a new one.
+
+**1. Groq (main service)**
+
+1. Go to [console.groq.com](https://console.groq.com) and sign in (Google account, GitHub or e-mail).
+2. Open **API Keys** in the menu ([console.groq.com/keys](https://console.groq.com/keys)).
+3. Click **Create API Key**, give it a name such as `Stark`, and confirm.
+4. Copy the key right away (it starts with `gsk_`). Groq shows it **only once**; if you lose it, create a new one.
+
+**2. Gemini (optional backup, Google)**
+
+1. Go to [aistudio.google.com](https://aistudio.google.com) and sign in with your Google account. On first visit,
+   accept Google AI Studio's terms.
+2. Click **Get API key** (left menu or top right), then **Create API key**. If it asks for a Google Cloud project,
+   let it create one for you.
+3. Copy the key (it starts with `AIza`).
+
+Note: on the free tier Google may use what you send to improve its products. If you don't want that, leave this
+key empty or untick **"Gemini'yi yedek olarak kullan"** in Settings.
+
+**3. OpenRouter (optional, last backup)**
+
+1. Go to [openrouter.ai](https://openrouter.ai) and click **Sign in** (Google, GitHub or e-mail).
+2. Open **Keys** from the account menu ([openrouter.ai/settings/keys](https://openrouter.ai/settings/keys)).
+3. Click **Create API Key**, name it `Stark`. You can leave the credit limit empty — Stark only uses the free
+   (`:free`) models, which cost nothing.
+4. Copy the key (it starts with `sk-or-`). It is shown only once.
+
+Free OpenRouter models allow about 50 requests per day (more if you ever buy credits). Stark uses them only for
+plain chat, as a last resort.
+
+**4. Put the keys into Stark**
+
+1. Open Stark and click the **gear** button at the bottom of the window (*Ayarlar* — Settings).
+2. Make sure **"İnternet erişimi"** (*internet access*) is ticked — without it Stark can't search for answers.
+3. Scroll to the **"İnternetteki model"** group and tick **"İnternetteki büyük modeli kullan"** (*use the large
+   online model*).
+4. Paste each key into its field: **Groq anahtarı**, **Gemini anahtarı**, **OpenRouter anahtarı**
+   (*anahtar* = key). Empty fields are simply skipped. The fields show dots — that's normal.
+5. Click **Kaydet** (*Save*). The keys are encrypted and stored only on this PC.
+
+**5. Check that it works**
+
+Say "Stark" and ask something like *"Bugün dünyada neler oldu?"* (What happened in the world today?). Under the
+answer, the bottom of the window shows which model replied, e.g. **"Groq · GPT-OSS 120B"**. If it says the local
+model (`qwen3:4b-instruct`), see the troubleshooting table below.
+
+To stop using the online models, untick **"İnternetteki büyük modeli kullan"**; to remove a key, clear its field and
+save.
 
 ## How it tries to stay accurate
 
@@ -311,6 +377,8 @@ back while it waits:
 | **"Dil modeline ulaşamadım"** (*can't reach the language model*) | Make sure Ollama is installed and running (Stark tries to start it). `ollama list` should show `qwen3:4b-instruct` |
 | **It doesn't hear "Stark"** | Settings → Ses (*audio*): does the input level bar move? Try the wake test; pick the right microphone |
 | **It hears itself and interrupts itself** | Use a headset or lower the speaker volume |
+| **Smart mode is on but the local model answers** | Check the key was copied completely (no space at the start or end) and saved. A deleted or mistyped key is skipped for 12 h — paste the correct one and save again to retry at once. The reason (e.g. HTTP 401 = wrong key) is shown in the Stark window |
+| **Answers get slow after many questions in a row** | Groq's free tier allows a limited number of words per minute; Stark waits a few seconds or moves to the next service. It recovers by itself within a minute |
 | **Internet questions get no answer** | Is internet access on in Settings? Free search engines may briefly return nothing after many queries |
 | **Screen reading doesn't work** | The Turkish language pack must be installed: Windows Settings → Time & language → Language |
 | **Python icon on the taskbar** | Unpin the old pin, then pin Stark again while it is running |
