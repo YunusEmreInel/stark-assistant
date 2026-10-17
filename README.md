@@ -1,13 +1,21 @@
 # Stark — a local, Turkish-speaking voice assistant for Windows
 
-**Stark** is a voice assistant that runs **entirely on your own Windows PC, for free**. It speaks Turkish (and
-English): say "Stark", ask your question, and it answers out loud. Speech recognition, the language model and the
-voice all run locally — no subscription, no API key, no cloud account. By default your conversations and memory
-never leave your computer.
+**Stark** is a free voice assistant for Windows. It speaks Turkish (and English): say "Stark", ask your question,
+and it answers out loud. You can use it in two ways — pick one in Settings at any time:
 
-Internet access is optional and only used for questions that need current information (news, weather, exchange
-rates, football fixtures, earthquakes). There is also an optional **smart mode** that sends the conversation to a
-larger online model on free tiers (Groq → Gemini → OpenRouter) for much better understanding; see
+| | **Local mode** (default) | **Smart mode** (optional) |
+|---|---|---|
+| Needs an API key? | **No** — works right after installation | Yes — free keys from Groq (and optionally Gemini / OpenRouter), [5-minute guide](#getting-the-free-api-keys) |
+| Language model | Small 4B model on your PC (Ollama) | Large online models (GPT-OSS 120B, Qwen3.8 27B, Gemini…), local model as fallback |
+| Understanding | Good for commands and simple questions; can misunderstand or invent details | Much better: understands follow-up questions, reasons, researches the web by itself before answering |
+| Speed | 5–17 s per answer (depends on your GPU) | Usually 1–5 s; 5–20 s when it researches |
+| Privacy | Conversations and memory never leave your PC | Your messages, recent conversation and relevant memory go to the chosen service |
+| GPU / RAM use | Model loaded on your PC while awake | Local model isn't loaded at all, so the GPU stays free |
+| Cost | Free | Free tiers (daily limits; no credit card needed) |
+
+In both modes speech recognition, the voice, commands (opening apps, screenshots, screen reading, volume…),
+calculations and the dictionary always run on your PC. Internet access is a separate, optional switch used for
+current information (news, weather, exchange rates, football fixtures, earthquakes). Details:
 [Smart mode](#smart-mode-optional-online-models).
 
 <table>
@@ -23,8 +31,8 @@ larger online model on free tiers (Groq → Gemini → OpenRouter) for much bett
 
 <sub>Window labels in these screenshots are shown in English for this README; the app's own interface is in Turkish.</sub>
 
-> This is a personal project and is not claimed to be error-free. Because it uses a small local language model,
-> some answers can be wrong — the code has several safeguards against this (see
+> This is a personal project and is not claimed to be error-free. Some answers can be wrong — especially in local
+> mode, where a small language model is used. The code has several safeguards against this (see
 > [How it tries to stay accurate](#how-it-tries-to-stay-accurate)).
 
 > **Language note:** Stark talks to you in Turkish, and its interface is in Turkish. The voice commands below are
@@ -86,7 +94,8 @@ The full command list is in the app under the **ⓘ** button in the title bar (h
 | Graphics card | Not required (runs on the CPU, slower) | NVIDIA with 4 GB VRAM or more |
 | Disk space | ~8 GB free | |
 | Microphone | Laptop microphone or headset | Headset (interrupting works more reliably) |
-| Internet | Only during installation | For current-information questions |
+| Internet | Only during installation (local mode) | Always on for smart mode and current-information questions |
+| API key | Not needed (local mode) | Free Groq key for smart mode — [how to get it](#getting-the-free-api-keys) |
 
 You need these installed first (both free):
 
@@ -141,7 +150,8 @@ Double-click **Stark** on your desktop. It is ready when the orb turns gold (fir
 
 ### 4. (Optional, recommended) Turn on smart mode
 
-Stark works without this, using the small model on your PC. For much better understanding, get free API keys from
+**You can skip this step** — Stark already works in local mode, using the small model on your PC, with no
+account or key. If you want much better understanding, get free API keys from
 Groq (required for smart mode), Gemini and OpenRouter (optional backups) — about 5 minutes, no credit card — and
 paste them into Settings. Step-by-step: [Getting the free API keys](#getting-the-free-api-keys).
 
@@ -388,9 +398,10 @@ back while it waits:
 
 ## Known limitations
 
-- The local 4B language model has limited general knowledge and occasionally makes Turkish grammar mistakes.
-  There are safeguards against made-up answers, but correctness is not guaranteed — verify important information
-  at its source.
+- In local mode the 4B language model has limited general knowledge and occasionally makes Turkish grammar
+  mistakes. Smart mode answers much better but depends on free tiers whose limits and models can change. In both
+  modes there are safeguards against made-up answers, but correctness is not guaranteed — verify important
+  information at its source.
 - The wake word does not recognise who is speaking; anyone nearby can say "Stark".
 - Interrupting is less reliable with speakers than with a headset.
 - Free search engines may occasionally return nothing; very local events may not be in the news yet.
